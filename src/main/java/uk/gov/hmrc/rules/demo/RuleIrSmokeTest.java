@@ -28,7 +28,7 @@ public class RuleIrSmokeTest {
         rows.add(sampleAdDocAi());
 
         rows.add(new RuleRow(
-                "BR675_MERGE_1",
+                "BR675_1067",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.requestedProcedure.code equals A01",
@@ -38,7 +38,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_2",
+                "BR675_1125",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals B02",
@@ -48,7 +48,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_3",
+                "BR675_1353",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.additionalDocuments.type.code equals C501",
@@ -58,7 +58,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_4",
+                "BR675_1029",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one Declaration.AuthorizationHolder.authorizationType.code equals EX",
@@ -68,7 +68,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_5",
+                "BR675_1231",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals 72M",
@@ -78,7 +78,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_6",
+                "BR675_1337",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.declaredDutyTaxFees.preference.code equals 100",
@@ -88,7 +88,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_7",
+                "BR675_217",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one ConsignmentShipment.valuationAdjustments.type.code equals A01",
@@ -98,7 +98,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_8",
+                "BR675_1186",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals B01",
@@ -108,7 +108,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_9",
+                "BR675_1125",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals B01",
@@ -118,7 +118,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_10",
+                "BR675_1244",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.previousProcedure.code equals B01",
@@ -128,7 +128,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_11",
+                "BR675_1281",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.additionalDocuments.exemption.code equals UE",
@@ -138,7 +138,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_MERGE_12",
+                "BR675_1125",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals B02",
@@ -147,15 +147,6 @@ public class RuleIrSmokeTest {
                 "BR675"
         ));
 
-        rows.add(new RuleRow(
-                "BR675_MERGE_13",
-                java.util.List.of("all"),
-                java.util.List.of("C211"),
-                "there is at least one Declaration.type.code equals IM",
-                "all GoodsItem.previousProcedure.code must is one of B01,B02",
-                "DMS12068",
-                "BR675"
-        ));
 
         // =======================================================
 // MERGE #1
@@ -202,6 +193,331 @@ public class RuleIrSmokeTest {
                 "BR675"
         ));
 
+// ======================================================
+// Smoke rows derived from your screenshots (Pointers sheet)
+// ID is taken from the BR675_xxxx column on the right.
+// Values are dummy values just to exercise the parser.
+// ======================================================
+
+
+// ---------- Screenshot 1 (rows 2..19) ----------
+
+        rows.add(new RuleRow(
+                "BR675_1231",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "at least one GoodsItem.additionalInformation.code must equals MOVE3",
+                "DMS_SMOKE_BR675_1231",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1067",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.requestedProcedure.code equals A01",
+                "all GoodsItem.previousProcedure.code must is one of B01,B02",
+                "DMS_SMOKE_BR675_1067",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1125",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "all GoodsItem.specialProcedures.code must is not one of 00A,00B",
+                "DMS_SMOKE_BR675_1125",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1029",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one Declaration.AuthorizationHolder.authorizationType.code equals EX123",
+                "at least one GoodsItem.additionalDocuments.type.code must equals C501",
+                "DMS_SMOKE_BR675_1029",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1353",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.additionalDocuments.type.code equals C501",
+                "at least one Declaration.AuthorizationHolder.authorizationType.code must equals EX123",
+                "DMS_SMOKE_BR675_1353",
+                "BR675"
+        ));
+
+// Row 7 (BR675_1337) in the screenshot shows THEN blank in the image → not generated.
+
+        rows.add(new RuleRow(
+                "BR675_217",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one ConsignmentShipment.valuationAdjustments.type.code equals VA1",
+                "all GoodsItem.valuationAdjustments.type.code must not equal VA9",
+                "DMS_SMOKE_BR675_217",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1186",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "at least one GoodsItem.additionalDocuments.type.code must equals C501",
+                "DMS_SMOKE_BR675_1186",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1241",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.additionalInformation.code equals GEN1",
+                "at least one GoodsItem.specialProcedures.code must equals 72M",
+                "DMS_SMOKE_BR675_1241",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1240",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.additionalInformation.code equals GEN1",
+                "at least one GoodsItem.specialProcedures.code must is one of 72M,73M",
+                "DMS_SMOKE_BR675_1240",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1346",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.additionalInformation.code equals GEN1",
+                "at least one GoodsItem.additionalDocuments.type.code must equals C501",
+                "DMS_SMOKE_BR675_1346",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1317",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "at least one GoodsItem.specialProcedures.code must is one of 72M,73M",
+                "DMS_SMOKE_BR675_1317",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1281",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.additionalDocuments.exemption.code equals EX9",
+                "at least one GoodsItem.additionalDocuments.type.code must is one of C501,C502",
+                "DMS_SMOKE_BR675_1281",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1514",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.additionalInformation.code equals GEN1",
+                "at least one GoodsItem.additionalInformation.code must equals GEN2",
+                "DMS_SMOKE_BR675_1514",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1030",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "at least one Declaration.AuthorizationHolder.authorizationType.code must equals EX123",
+                "DMS_SMOKE_BR675_1030",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1319",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "at least one GoodsItem.specialProcedures.code must equals 72M",
+                "DMS_SMOKE_BR675_1319",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1244",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.previousProcedure.code equals B01",
+                "all GoodsItem.additionalDocuments.type.code must is not one of C501,C502",
+                "DMS_SMOKE_BR675_1244",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1351",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "at least one GoodsItem.commodity.classifications.type must equals 10",
+                "DMS_SMOKE_BR675_1351",
+                "BR675"
+        ));
+
+// ---------- Screenshot 2 (rows 19..33) ----------
+// Some BR675 ids are partially obscured by glare in the photo.
+// Where I could not read the full ID confidently, I’ve used BR675_UNK_Rxx.
+// Replace those with the exact BR675_#### from your sheet.
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R20", // looked like BR675_119? in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.declaredDutyTaxFees.preference.code equals P1",
+                "at least one GoodsItem.requestedProcedure.code must equals A01",
+                "DMS_SMOKE_BR675_UNK_R20",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_757",
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.declaredDutyTaxFees.preference.code equals P1",
+                "all GoodsItem.Origin.subRole.code must not equal X1",
+                "DMS_SMOKE_BR675_757",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R22", // looked like BR675_105? in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.additionalDocuments.type.code equals C501",
+                "at least one ConsignmentShipment.previousDocuments.type.code must equals N380",
+                "DMS_SMOKE_BR675_UNK_R22",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R23", // looked like BR675_122? in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.additionalDocuments.type.code equals C501",
+                "at least one GoodsItem.specialProcedures.code must equals 72M",
+                "DMS_SMOKE_BR675_UNK_R23",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R24", // looked like BR675_142? in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "at least one GoodsItem.additionalInformation.code must is one of GEN1,GEN2",
+                "DMS_SMOKE_BR675_UNK_R24",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R25", // ID obscured by glare
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "all GoodsItem.specialProcedures.code must not equal 99Z",
+                "DMS_SMOKE_BR675_UNK_R25",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R26", // looked like BR675_93?2 in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.additionalDocuments.type.code equals C501",
+                "at least one GoodsItem.Origin.subRole.code must equals X1",
+                "DMS_SMOKE_BR675_UNK_R26",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R27", // looked like BR675_43?2 in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.additionalInformation.code equals GEN1",
+                "at least one GoodsItem.requestedProcedure.code must equals A01",
+                "DMS_SMOKE_BR675_UNK_R27",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R28", // looked like BR675_118? in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "all GoodsItem.additionalDocuments.type.code must not equal C999",
+                "DMS_SMOKE_BR675_UNK_R28",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R29", // looked like BR675_13?? in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "at least one GoodsItem.invoiceAmount must is provided",
+                "DMS_SMOKE_BR675_UNK_R29",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R30", // looked like BR675_158? in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "all GoodsItem.additionalInformation.code must not equal GEN9",
+                "DMS_SMOKE_BR675_UNK_R30",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R31", // looked like BR675_164? in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.requestedProcedure.code equals A01",
+                "all GoodsItem.previousProcedure.code must is not one of B01,B02",
+                "DMS_SMOKE_BR675_UNK_R31",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R32", // looked like BR675_151? in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.valuationMethod.code equals 1",
+                "all GoodsItem.specialProcedures.code must is not one of 72M,73M",
+                "DMS_SMOKE_BR675_UNK_R32",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_UNK_R33", // looked like BR675_138? in the image
+                java.util.List.of("all"),
+                java.util.List.of("C211"),
+                "there is at least one GoodsItem.valuationAdjustments.type.code equals VA1",
+                "all GoodsItem.valuationAdjustments.amount.value must is less than 100",
+                "DMS_SMOKE_BR675_UNK_R33",
+                "BR675"
+        ));
 
         for (RuleRow row : rows) {
             System.out.println("==================================================");
