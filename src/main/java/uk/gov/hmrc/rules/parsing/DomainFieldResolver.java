@@ -11,7 +11,7 @@ package uk.gov.hmrc.rules.parsing;
 public class DomainFieldResolver {
 
     public DomainFieldDescriptor resolve(String canonicalPath) {
-        String path = canonicalPath.trim();
+q        String path = canonicalPath.trim();
 
         if (path.equalsIgnoreCase("GoodsItem.specialProcedures.code")) {
             return new DomainFieldDescriptor(

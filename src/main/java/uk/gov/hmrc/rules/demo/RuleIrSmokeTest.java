@@ -26,6 +26,13 @@ public class RuleIrSmokeTest {
         rows.add(sampleSpAi());
         rows.add(sampleSpSpDifferentGi());
         rows.add(sampleAdDocAi());
+// ======================================================
+// Consolidated BR675 smoke rows
+// - Exact duplicates removed (your IDs win)
+// - ID collisions resolved by suffixing (_A/_B/_SMOKE)
+// ======================================================
+
+// --- Your original set (kept) ---
 
         rows.add(new RuleRow(
                 "BR675_1067",
@@ -107,8 +114,10 @@ public class RuleIrSmokeTest {
                 "BR675"
         ));
 
+// NOTE: BR675_1125 appears multiple times in your pasted list with different IF/THEN.
+// Keeping them as separate smoke cases by suffixing.
         rows.add(new RuleRow(
-                "BR675_1125",
+                "BR675_1125_A",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals B01",
@@ -138,7 +147,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_1125",
+                "BR675_1125_B",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals B02",
@@ -147,27 +156,9 @@ public class RuleIrSmokeTest {
                 "BR675"
         ));
 
+// --- Your MERGE rows (kept unless exact duplicate) ---
+// MERGE_1 was an exact duplicate of BR675_1067 -> removed.
 
-        // =======================================================
-// MERGE #1
-// IF : there is at least one GoodsItem.requestedProcedure.code equals
-// THEN: all GoodsItem.previousProcedure.code must is one of
-// =======================================================
-        rows.add(new RuleRow(
-                "BR675_MERGE_1",
-                java.util.List.of("all"),
-                java.util.List.of("C211"),
-                "there is at least one GoodsItem.requestedProcedure.code equals A01",
-                "all GoodsItem.previousProcedure.code must is one of B02,B03",
-                "DMS12056",
-                "BR675"
-                ));
-
-// =======================================================
-// MERGE #2
-// IF : there is at least one GoodsItem.additionalDocuments.exemption.code equals
-// THEN: at least one GoodsItem.additionalDocuments.type.code must is one of
-// =======================================================
         rows.add(new RuleRow(
                 "BR675_MERGE_2",
                 java.util.List.of("all"),
@@ -176,13 +167,8 @@ public class RuleIrSmokeTest {
                 "at least one GoodsItem.additionalDocuments.type.code must is one of AD1,AD2",
                 "DMS12056",
                 "BR675"
-                ));
+        ));
 
-// =======================================================
-// MERGE #3
-// IF : there is at least one GoodsItem.valuationAdjustments.type.code equals
-// THEN: all GoodsItem.valuationAdjustments.amount.value must is less than
-// =======================================================
         rows.add(new RuleRow(
                 "BR675_MERGE_3",
                 java.util.List.of("all"),
@@ -193,27 +179,10 @@ public class RuleIrSmokeTest {
                 "BR675"
         ));
 
-// ======================================================
-// Smoke rows derived from your screenshots (Pointers sheet)
-// ID is taken from the BR675_xxxx column on the right.
-// Values are dummy values just to exercise the parser.
-// ======================================================
-
-
-// ---------- Screenshot 1 (rows 2..19) ----------
+// --- Screenshot 1 smoke rows (only those NOT exact-duplicated by your originals) ---
 
         rows.add(new RuleRow(
-                "BR675_1231",
-                java.util.List.of("all"),
-                java.util.List.of("C211"),
-                "there is at least one GoodsItem.specialProcedures.code equals 72M",
-                "at least one GoodsItem.additionalInformation.code must equals MOVE3",
-                "DMS_SMOKE_BR675_1231",
-                "BR675"
-        ));
-
-        rows.add(new RuleRow(
-                "BR675_1067",
+                "BR675_1067_SMOKE",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.requestedProcedure.code equals A01",
@@ -223,7 +192,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_1125",
+                "BR675_1125_SMOKE",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals 72M",
@@ -233,7 +202,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_1029",
+                "BR675_1029_SMOKE",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one Declaration.AuthorizationHolder.authorizationType.code equals EX123",
@@ -243,7 +212,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_1353",
+                "BR675_1353_SMOKE",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.additionalDocuments.type.code equals C501",
@@ -252,10 +221,8 @@ public class RuleIrSmokeTest {
                 "BR675"
         ));
 
-// Row 7 (BR675_1337) in the screenshot shows THEN blank in the image → not generated.
-
         rows.add(new RuleRow(
-                "BR675_217",
+                "BR675_217_SMOKE",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one ConsignmentShipment.valuationAdjustments.type.code equals VA1",
@@ -265,7 +232,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_1186",
+                "BR675_1186_SMOKE",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals 72M",
@@ -314,8 +281,9 @@ public class RuleIrSmokeTest {
                 "BR675"
         ));
 
+// NOTE: BR675_1281 already used above (UE/C501,C624). Keep this as a separate smoke by suffix.
         rows.add(new RuleRow(
-                "BR675_1281",
+                "BR675_1281_SMOKE",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.additionalDocuments.exemption.code equals EX9",
@@ -355,16 +323,6 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_1244",
-                java.util.List.of("all"),
-                java.util.List.of("C211"),
-                "there is at least one GoodsItem.previousProcedure.code equals B01",
-                "all GoodsItem.additionalDocuments.type.code must is not one of C501,C502",
-                "DMS_SMOKE_BR675_1244",
-                "BR675"
-        ));
-
-        rows.add(new RuleRow(
                 "BR675_1351",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
@@ -374,13 +332,10 @@ public class RuleIrSmokeTest {
                 "BR675"
         ));
 
-// ---------- Screenshot 2 (rows 19..33) ----------
-// Some BR675 ids are partially obscured by glare in the photo.
-// Where I could not read the full ID confidently, I’ve used BR675_UNK_Rxx.
-// Replace those with the exact BR675_#### from your sheet.
+// --- Screenshot 2 smoke rows (kept as-is, with UNK ids) ---
 
         rows.add(new RuleRow(
-                "BR675_UNK_R20", // looked like BR675_119? in the image
+                "BR675_UNK_R20",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.declaredDutyTaxFees.preference.code equals P1",
@@ -400,7 +355,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R22", // looked like BR675_105? in the image
+                "BR675_UNK_R22",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.additionalDocuments.type.code equals C501",
@@ -410,7 +365,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R23", // looked like BR675_122? in the image
+                "BR675_UNK_R23",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.additionalDocuments.type.code equals C501",
@@ -420,7 +375,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R24", // looked like BR675_142? in the image
+                "BR675_UNK_R24",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals 72M",
@@ -430,7 +385,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R25", // ID obscured by glare
+                "BR675_UNK_R25",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals 72M",
@@ -440,7 +395,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R26", // looked like BR675_93?2 in the image
+                "BR675_UNK_R26",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.additionalDocuments.type.code equals C501",
@@ -450,7 +405,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R27", // looked like BR675_43?2 in the image
+                "BR675_UNK_R27",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.additionalInformation.code equals GEN1",
@@ -460,7 +415,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R28", // looked like BR675_118? in the image
+                "BR675_UNK_R28",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals 72M",
@@ -470,7 +425,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R29", // looked like BR675_13?? in the image
+                "BR675_UNK_R29",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals 72M",
@@ -480,7 +435,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R30", // looked like BR675_158? in the image
+                "BR675_UNK_R30",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.specialProcedures.code equals 72M",
@@ -490,7 +445,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R31", // looked like BR675_164? in the image
+                "BR675_UNK_R31",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.requestedProcedure.code equals A01",
@@ -500,7 +455,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R32", // looked like BR675_151? in the image
+                "BR675_UNK_R32",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.valuationMethod.code equals 1",
@@ -510,7 +465,7 @@ public class RuleIrSmokeTest {
         ));
 
         rows.add(new RuleRow(
-                "BR675_UNK_R33", // looked like BR675_138? in the image
+                "BR675_UNK_R33",
                 java.util.List.of("all"),
                 java.util.List.of("C211"),
                 "there is at least one GoodsItem.valuationAdjustments.type.code equals VA1",

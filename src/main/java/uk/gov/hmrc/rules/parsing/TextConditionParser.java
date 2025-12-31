@@ -43,6 +43,9 @@ public class TextConditionParser implements ConditionParser {
         raw = raw.replaceAll("(?i)\\s+must\\s+is\\s+less\\s+than\\s+", " must be less than ");
         raw = raw.replaceAll("(?i)\\s+must\\s+is\\s+greater\\s+than\\s+", " must be greater than ");
 
+        // NEW: fixes "at least one X must is provided"
+        raw = raw.replaceAll("(?i)\\s+must\\s+is\\s+provided\\s*", " must be provided ");
+
 
         String lower = raw.toLowerCase();
 
@@ -74,6 +77,8 @@ public class TextConditionParser implements ConditionParser {
                 " equals ",
                 " must be less than ",
                 " must be greater than ",
+                // NEW: allow presence checks
+                " must be provided ",
                 " not equals "
         };
 
@@ -149,6 +154,10 @@ public class TextConditionParser implements ConditionParser {
         }
         if (p.equals("must be greater")) {
             return ">";
+        }
+        // NEW: presence / required field
+        if (p.equals("must be provided")) {
+            return "IS_PROVIDED";
         }
         return "UNKNOWN_OP";
     }
