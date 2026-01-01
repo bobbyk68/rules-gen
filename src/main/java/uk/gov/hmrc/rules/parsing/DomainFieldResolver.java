@@ -10,6 +10,16 @@ package uk.gov.hmrc.rules.parsing;
  */
 public class DomainFieldResolver {
 
+    private final boolean strict;
+
+    public DomainFieldResolver() {
+        this(true); // default: strict
+    }
+
+    public DomainFieldResolver(boolean strict) {
+        this.strict = strict;
+    }
+
     public DomainFieldDescriptor resolve(String canonicalPath) {
         String path = canonicalPath.trim();
 
@@ -121,24 +131,206 @@ public class DomainFieldResolver {
             );
         }
 
+
+
+
+        if (path.equalsIgnoreCase("GoodsItem.commodity.classifications.type")) {
+            return new DomainFieldDescriptor(
+                    "CommodityClassification",
+                    "GI",
+                    "type",
+                    "commodity classification type"
+            );
+        }
+
+        if (path.equalsIgnoreCase("GoodsItem.invoiceAmount")) {
+            return new DomainFieldDescriptor(
+                    "GoodsItem",
+                    "GI",
+                    "invoiceAmount",
+                    "invoice amount"
+            );
+        }
+
+        if (path.equalsIgnoreCase("GoodsItem.valuationMethod.code")) {
+            return new DomainFieldDescriptor(
+                    "GoodsItem",
+                    "GI",
+                    "valuationMethodCode",
+                    "valuation method"
+            );
+        }
+
+        if (path.equalsIgnoreCase("ConsignmentShipment.previousDocuments.type.code")) {
+            return new DomainFieldDescriptor(
+                    "PreviousDocument",
+                    "DECL",     // if you have a dedicated ConsignmentShipment anchor, change this to that key
+                    "typeCode",
+                    "previous document type"
+            );
+        }
+
         if (path.equalsIgnoreCase("ConsignmentShipment.valuationAdjustments.type.code")) {
             return new DomainFieldDescriptor(
                     "ValuationAdjustment",
-                    "CON",
+                    "DECL",     // same note as above
                     "typeCode",
                     "consignment valuation adjustment type"
             );
         }
 
+        if (path.equalsIgnoreCase("GoodsItem.declaredDutyTaxFees.preference.code")) {
+            return new DomainFieldDescriptor(
+                    "DeclaredDutyTaxFee",
+                    "GI",
+                    "preferenceCode",
+                    "declared duty tax fee preference"
+            );
+        }
 
+        if (path.equalsIgnoreCase("GoodsItem.Origin.subRole.code")) {
+            return new DomainFieldDescriptor(
+                    "Origin",
+                    "GI",
+                    "subRoleCode",
+                    "origin sub role"
+            );
+        }
 
-        // Fallback: not recognised – still usable for debugging
+        if (path.equalsIgnoreCase("GoodsItem.commodity.classifications.type")) {
+            return new DomainFieldDescriptor(
+                    "CommodityClassification",
+                    "GI",
+                    "type",
+                    "commodity classification type"
+            );
+        }
+
+        if (path.equalsIgnoreCase("GoodsItem.invoiceAmount")) {
+            return new DomainFieldDescriptor(
+                    "GoodsItem",
+                    "GI",
+                    "invoiceAmount",
+                    "invoice amount"
+            );
+        }
+
+        if (path.equalsIgnoreCase("GoodsItem.valuationMethod.code")) {
+            return new DomainFieldDescriptor(
+                    "GoodsItem",
+                    "GI",
+                    "valuationMethodCode",
+                    "valuation method"
+            );
+        }
+
+        if (path.equalsIgnoreCase("ConsignmentShipment.previousDocuments.type.code")) {
+            return new DomainFieldDescriptor(
+                    "PreviousDocument",
+                    "DECL",     // if you have a dedicated ConsignmentShipment anchor, change this to that key
+                    "typeCode",
+                    "previous document type"
+            );
+        }
+
+        if (path.equalsIgnoreCase("ConsignmentShipment.valuationAdjustments.type.code")) {
+            return new DomainFieldDescriptor(
+                    "ValuationAdjustment",
+                    "DECL",     // same note as above
+                    "typeCode",
+                    "consignment valuation adjustment type"
+            );
+        }
+
+        // ================================================
+// CHANGED: add resolver entries for new canonical paths
+// ================================================
+
+        if (path.equalsIgnoreCase("GoodsItem.Origin.subRole.code")) {
+            return new DomainFieldDescriptor(
+                    "Origin",
+                    "GI",
+                    "subRoleCode",
+                    "origin sub role"
+            );
+        }
+
+        if (path.equalsIgnoreCase("GoodsItem.declaredDutyTaxFees.preference.code")) {
+            return new DomainFieldDescriptor(
+                    "DeclaredDutyTaxFee",
+                    "GI",
+                    "preferenceCode",
+                    "declared duty tax fee preference"
+            );
+        }
+
+        if (path.equalsIgnoreCase("ConsignmentShipment.previousDocuments.type.code")) {
+            return new DomainFieldDescriptor(
+                    "PreviousDocument",
+                    "CS",
+                    "typeCode",
+                    "previous document type"
+            );
+        }
+
+        if (path.equalsIgnoreCase("ConsignmentShipment.valuationAdjustments.type.code")) {
+            return new DomainFieldDescriptor(
+                    "ValuationAdjustment",
+                    "CS",
+                    "typeCode",
+                    "valuation adjustment type"
+            );
+        }
+
+        if (path.equalsIgnoreCase("GoodsItem.commodity.classifications.type")) {
+            return new DomainFieldDescriptor(
+                    "CommodityClassification",
+                    "GI",
+                    "classificationType",
+                    "commodity classification type"
+            );
+        }
+
+        if (path.equalsIgnoreCase("GoodsItem.invoiceAmount")) {
+            return new DomainFieldDescriptor(
+                    "GoodsItem",
+                    "GI",
+                    "invoiceAmount",
+                    "invoice amount"
+            );
+        }
+
+        if (path.equalsIgnoreCase("GoodsItem.valuationMethod.code")) {
+            return new DomainFieldDescriptor(
+                    "GoodsItem",
+                    "GI",
+                    "valuationMethodCode",
+                    "valuation method"
+            );
+        }
+
+// ----- REPLACEMENT FOR "UnknownEntity" FALLBACK -----
+        if (strict) {
+            throw new IllegalArgumentException(
+                    "Unmapped canonical path: '" + canonicalPath + "'. " +
+                            "Add a mapping in DomainFieldResolver."
+            );
+        }
+
+        // Optional: lenient mode for debugging only (never for prod generation)
         return new DomainFieldDescriptor(
-                "UnknownEntity",
+                "UNMAPPED",
                 "GI",
                 lastSegment(path),
-                lastSegment(path)
+                "UNMAPPED:" + path
         );
+//        // Fallback: not recognised – still usable for debugging
+//        return new DomainFieldDescriptor(
+//                "UnknownEntity",
+//                "GI",
+//                lastSegment(path),
+//                lastSegment(path)
+//        );
     }
 
     //GoodsItem.valuationAdjustments.type.code

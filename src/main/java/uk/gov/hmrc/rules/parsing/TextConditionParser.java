@@ -42,6 +42,12 @@ public class TextConditionParser implements ConditionParser {
         raw = raw.replaceAll("(?i)\\s+must\\s+is\\s+one\\s+of\\s+", " must be one of ");
         raw = raw.replaceAll("(?i)\\s+must\\s+is\\s+less\\s+than\\s+", " must be less than ");
         raw = raw.replaceAll("(?i)\\s+must\\s+is\\s+greater\\s+than\\s+", " must be greater than ");
+        // ==========================================================
+        // CHANGED: parseClause(...)
+        // - Normalise "must is not one of" -> "must not be one of"
+        // ==========================================================
+        raw = raw.replaceAll("(?i)\\s+must\\s+is\\s+not\\s+one\\s+of\\s+", " must not be one of ");
+
 
         // NEW: fixes "at least one X must is provided"
         raw = raw.replaceAll("(?i)\\s+must\\s+is\\s+provided\\s*", " must be provided ");
@@ -69,6 +75,12 @@ public class TextConditionParser implements ConditionParser {
         // 2) TAIL – operator phrase
         // Keep these with leading/trailing spaces so we match cleanly between path and values.
         String[] operatorPhrases = new String[] {
+                // ----- UNARY (no trailing space) -----
+                " must not be provided ",
+                " must be provided ",
+                " is provided ",
+
+
                 " must not be one of ",
                 " must be one of ",
                 " must not equal ",
@@ -77,9 +89,12 @@ public class TextConditionParser implements ConditionParser {
                 " equals ",
                 " must be less than ",
                 " must be greater than ",
-                // NEW: allow presence checks
                 " must be provided ",
-                " not equals "
+                " must be provided",
+                " not equals ",
+                " must is provided ",
+                " must is provided",
+                " is provided "
         };
 
         String lowerAfter = afterQuantifier.toLowerCase();
@@ -152,13 +167,18 @@ public class TextConditionParser implements ConditionParser {
         if (p.equals("must be less than")) {
             return "<";
         }
-        if (p.equals("must be greater")) {
+        if (p.equals("must be greater than")) {
             return ">";
         }
         // NEW: presence / required field
-        if (p.equals("must be provided")) {
+        if (p.equals("must be provided") || p.equals("must is provided") || p.equals("is provided")) {
             return "IS_PROVIDED";
         }
+        if (p.equals("must not be provided")) {
+            return "IS_NOT_PROVIDED";
+        }
+
+
         return "UNKNOWN_OP";
     }
 
