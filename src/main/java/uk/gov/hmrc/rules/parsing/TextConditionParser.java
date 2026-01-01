@@ -76,9 +76,9 @@ public class TextConditionParser implements ConditionParser {
         // Keep these with leading/trailing spaces so we match cleanly between path and values.
         String[] operatorPhrases = new String[] {
                 // ----- UNARY (no trailing space) -----
-                " must not be provided ",
-                " must be provided ",
-                " is provided ",
+                " must not be provided",
+                " must be provided",
+                " is provided",
 
 
                 " must not be one of ",
@@ -89,12 +89,7 @@ public class TextConditionParser implements ConditionParser {
                 " equals ",
                 " must be less than ",
                 " must be greater than ",
-                " must be provided ",
-                " must be provided",
-                " not equals ",
-                " must is provided ",
-                " must is provided",
-                " is provided "
+                " not equals "
         };
 
         String lowerAfter = afterQuantifier.toLowerCase();

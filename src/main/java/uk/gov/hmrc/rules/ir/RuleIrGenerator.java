@@ -41,23 +41,36 @@ public class RuleIrGenerator {
                 child.setRole(pc.getRole());
                 child.setFieldTypeLabel(pc.getFieldTypeLabel());
 
-                if (pc.getValues().isEmpty()) {
-                    // EXISTS-only: presence of fact is enough
-                } else if ("IN".equalsIgnoreCase(pc.getOperator())
-                        || "NOT_IN".equalsIgnoreCase(pc.getOperator())) {
+                String op = pc.getOperator() == null ? "" : pc.getOperator().trim().toUpperCase();
+
+                // Unary operators: no RHS values, but still a real constraint
+                if ("IS_PROVIDED".equals(op) || "IS_PRESENT".equals(op)) {
                     child.getFieldConstraints().put(
-                        pc.getFieldName(),
-                        new Constraint(pc.getOperator(), pc.getValues())
+                            pc.getFieldName(),
+                            new Constraint(op, Boolean.TRUE) // or Boolean.TRUE, depending on your Constraint design
                     );
+
+                    // Pure existence: presence of the child fact is enough
+                } else if ("EXISTS".equals(op)) {
+                    // no field constraint
+                } else if (pc.getValues().isEmpty()) {
+                    throw new IllegalStateException("Operator " + op + " requires values for " + pc);
+                } else if ("IN".equals(op) || "NOT_IN".equals(op)) {
+                    child.getFieldConstraints().put(
+                            pc.getFieldName(),
+                            new Constraint(op, Boolean.TRUE)
+                    );
+
                 } else {
                     child.getFieldConstraints().put(
-                        pc.getFieldName(),
-                        new Constraint(pc.getOperator(), pc.getValues().get(0))
+                            pc.getFieldName(),
+                            new Constraint(op, pc.getValues().get(0))
                     );
                 }
 
                 model.getConditions().add(child);
             }
+
         }
 
         EmitErrorActionNode emit = new EmitErrorActionNode();
