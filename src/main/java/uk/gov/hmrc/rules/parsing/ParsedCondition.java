@@ -3,6 +3,8 @@ package uk.gov.hmrc.rules.parsing;
 import java.util.List;
 public class ParsedCondition {
 
+    enum Quantifier { AT_LEAST_ONE, ALL }
+    Quantifier quantifier;     // <-- add this (or equivalent)
     private final String entityType;
     private final String parentAnchorKey;
     private final String fieldName;
@@ -31,7 +33,7 @@ public class ParsedCondition {
         return entityType;
     }
 
-    public String getParentAnchorKey() {
+    public String getParentAnchoraKey() {
         return parentAnchorKey;
     }
 

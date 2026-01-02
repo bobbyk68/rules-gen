@@ -44,7 +44,7 @@ public class RuleIrGenerator {
                 String op = pc.getOperator() == null ? "" : pc.getOperator().trim().toUpperCase();
 
                 // Unary operators: no RHS values, but still a real constraint
-                if ("IS_PROVIDED".equals(op) || "IS_PRESENT".equals(op)) {
+                if (isUnary(op)) {
                     child.getFieldConstraints().put(
                             pc.getFieldName(),
                             new Constraint(op, Boolean.TRUE) // or Boolean.TRUE, depending on your Constraint design
@@ -126,4 +126,9 @@ public class RuleIrGenerator {
         int idx = id.indexOf('_');
         return (idx > 0) ? id.substring(0, idx) : id;
     }
+
+    boolean isUnary(String op) {
+        return "IS_PROVIDED".equals(op) || "IS_PRESENT".equals(op);
+    }
+
 }
