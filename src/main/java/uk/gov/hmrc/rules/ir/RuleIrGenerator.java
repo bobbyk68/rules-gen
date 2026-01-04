@@ -41,6 +41,17 @@ public class RuleIrGenerator {
                 child.setRole(pc.getRole());
                 child.setFieldTypeLabel(pc.getFieldTypeLabel());
 
+                // ==================================================
+                // ADD: Existence semantics for BR675 DSL/DSLR wording
+                // PRIMARY = positive existence, SECONDARY = "no matching ... exists"
+                // ==================================================
+                if (pc.getRole() == ConditionRole.SECONDARY) {
+                    child.setExistence(FactConditionNode.Existence.NOT_EXISTS);
+                } else {
+                    child.setExistence(FactConditionNode.Existence.EXISTS);
+                }
+
+
                 String op = pc.getOperator() == null ? "" : pc.getOperator().trim().toUpperCase();
 
                 // Unary operators: no RHS values, but still a real constraint

@@ -5,13 +5,25 @@ import java.util.Map;
 
 public class FactConditionNode extends ConditionNode {
 
+    public enum Existence {
+        EXISTS,
+        NOT_EXISTS
+    }
+
     private String alias;
     private String factType;
     private String parentAlias;
     private String parentField = "seq";
     private String parentJoinField = "parentSeq";
 
-    private final Map<String, Constraint> fieldConstraints = new LinkedHashMap<>();
+    /**
+     * Key semantic needed for BR675 DSLR:
+     *  - EXISTS: "Goods item with special procedure exists"
+     *  - NOT_EXISTS: "No matching goods item with additional information exists"
+     */
+    private Existence existence = Existence.EXISTS;
+
+    private final java.util.Map<String, Constraint> fieldConstraints = new java.util.LinkedHashMap<>();
 
     public String getAlias() {
         return alias;
@@ -53,7 +65,16 @@ public class FactConditionNode extends ConditionNode {
         this.parentJoinField = parentJoinField;
     }
 
-    public Map<String, Constraint> getFieldConstraints() {
+    public Existence getExistence() {
+        return existence;
+    }
+
+    public void setExistence(Existence existence) {
+        this.existence = (existence == null) ? Existence.EXISTS : existence;
+    }
+
+    public java.util.Map<String, Constraint> getFieldConstraints() {
         return fieldConstraints;
     }
 }
+

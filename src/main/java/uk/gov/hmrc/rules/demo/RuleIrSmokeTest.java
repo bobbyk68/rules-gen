@@ -46,16 +46,11 @@ public class RuleIrSmokeTest {
             ParsedCondition thenCond = parser.parseThen(row.thenCondition());
 
             RuleModel model = irGen.generate(row, java.util.List.of(ifCond, thenCond));
-
-            debugPrintParsedConditions(ifCond, thenCond);
-            debugPrintIr(model);
-
-            String ruleSet = extractRuleSet(row.id()); // BR675
-
+            String ruleSet = extractRuleSet(row.id());           // BR675
             DslEmitter dslEmitter = new DslEmitter(List.of(new Br675DslEmitter()));
             DslEmission emission = dslEmitter.emit(ruleSet, model);
+            debugPrintDsl(emission);
 
-            System.out.println(dslEmitter.renderDsl(emission));
         }
 
     }

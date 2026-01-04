@@ -10,7 +10,7 @@ public interface RuleSetDslEmitter {
 
     DslEmission emit(RuleModel model);
 
-    List<DslEntry> emitWhen(RuleModel model);
+    java.util.List<DslEntry> emitWhen(RuleModel model);
 
-    List<DslEntry> emitThen(RuleModel model);
+    java.util.List<DslEntry> emitThen(RuleModel model);
 }

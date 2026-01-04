@@ -1,11 +1,6 @@
 package uk.gov.hmrc.rules.dsl;
 
-import uk.gov.hmrc.rules.emitter.Br675ThenRhsRenderer;
-import uk.gov.hmrc.rules.emitter.Br675WhenRhsRenderer;
 import uk.gov.hmrc.rules.ir.*;
-
-
-import java.util.List;
 
 public class Br675DslEmitter implements RuleSetDslEmitter {
 
@@ -20,91 +15,109 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
 
     @Override
     public DslEmission emit(RuleModel model) {
+        java.util.List<DslEntry> when = emitWhen(model);
+        java.util.List<DslEntry> then = emitThen(model);
+        return new DslEmission(when, then);
+    }
+
+    @Override
+    public java.util.List<DslEntry> emitWhen(RuleModel model) {
 
         java.util.List<DslEntry> when = new java.util.ArrayList<>();
-        java.util.List<DslEntry> then = new java.util.ArrayList<>();
 
-        // TEMP, just to prove the pipeline end-to-end:
-        // 1) turn each FactConditionNode into a [when] DSL entry (very rough)
-        // 1) turn each FactConditionNode into a [when] DSL entry (still rough)
         for (ConditionNode n : model.getConditions()) {
-            if (n instanceof FactConditionNode fc) {
-
-                String parentAnchorKey = inferAnchor(fc.getFactType()); // "GI" or "DECL"
-                String quantifier = "AT_LEAST_ONE"; // TODO: carry real quantifier into IR node
-
-                for (java.util.Map.Entry<String, Constraint> e : fc.getFieldConstraints().entrySet()) {
-                    String field = e.getKey();
-                    Constraint c = e.getValue();
-                    String op = c.getOperator();
-
-                    String lhs = "[when] " + fc.getFieldTypeLabel() + " - with " + field + " " + op + " {value}";
-                    String rhs = field + " " + op + " {value}";
-
-                    when.add(new DslEntry(
-                            new DslKey(
-                                    "BR675",
-                                    "condition",
-                                    quantifier,
-                                    parentAnchorKey,
-                                    fc.getFactType(),   // entityType
-                                    field,
-                                    op
-                            ),
-                            "when",
-                            lhs,
-                            rhs
-                    ));
-                }
+            if (!(n instanceof FactConditionNode fc)) {
+                continue;
             }
-        }
 
+            // TODO (later): carry these on the IR nodes rather than infer.
+            String parentAnchorKey = "GI";
+            String quantifier = "AT_LEAST_ONE";
 
+            // (A) Anchor DSL entry (exists/bind/join)
+            {
+                String lhs = wording.anchorLhs(fc, quantifier, parentAnchorKey, fc.getFieldTypeLabel());
 
-        // 2) add one [then] DSL entry (also rough) from the action node
-        for (ActionNode a : model.getActions()) {
-            if (a instanceof EmitErrorActionNode emit) {
+                String rhs = whenRhs.renderAnchor(fc, parentAnchorKey);
 
-                String lhs = "[then] Emit " + emit.getBrCode() + " validation error";
-                String rhs = "insert( emit(drools, " + emit.getBrCode() + ", \"" + emit.getDmsErrorCode() + "\" ) );";
+                when.add(new DslEntry(
+                        new DslKey("BR675", "condition", quantifier, parentAnchorKey,
+                                fc.getFactType(), "__ANCHOR__", "EXISTS"),
+                        "condition",
+                        lhs,
+                        rhs
+                ));
+            }
 
-                then.add(new DslEntry(
-                        new DslKey(
-                                "BR675",
-                                "consequence",
-                                "EMIT",
-                                "DECL",
-                                "ValidationResult",
-                                "errorCode",
-                                "=="
-                        ),
-                        "then",
+            // (B) Dash DSL entries (constraints)
+            for (java.util.Map.Entry<String, Constraint> e : fc.getFieldConstraints().entrySet()) {
+                String field = e.getKey();
+                Constraint c = e.getValue();
+
+                String op = normaliseOperator(c.getOperator());
+
+                String lhs = wording.dashLhs(field, op);
+                String rhs = whenRhs.renderFieldConstraint(fc, field, op);
+
+                when.add(new DslEntry(
+                        new DslKey("BR675", "condition", quantifier, parentAnchorKey,
+                                fc.getFactType(), field, op),
+                        "condition",
                         lhs,
                         rhs
                 ));
             }
         }
 
-
-        return new DslEmission(when, then);
-    }
-
-    private static String inferAnchor(String factType) {
-        if (factType == null) return "GI";
-        return switch (factType) {
-            case "Declaration", "DeclarationAmendment", "DeclarationCustomsOffice",
-                 "DeclarationCurrency", "DeclarationAdditionalInformation" -> "DECL";
-            default -> "GI";
-        };
+        return when;
     }
 
     @Override
-    public List<DslEntry> emitWhen(RuleModel model) {
-        return List.of();
+    public java.util.List<DslEntry> emitThen(RuleModel model) {
+
+        java.util.List<DslEntry> then = new java.util.ArrayList<>();
+
+        for (ActionNode a : model.getActions()) {
+            if (!(a instanceof EmitErrorActionNode emit)) {
+                continue;
+            }
+
+            String lhs = wording.emitLhs(emit.getBrCode());
+            String rhs = thenRhs.renderEmit(emit);
+
+            then.add(new DslEntry(
+                    new DslKey("BR675", "consequence", "EMIT", "DECL",
+                            "ValidationResult", "errorCode", "=="),
+                    "consequence",
+                    lhs,
+                    rhs
+            ));
+        }
+
+        return then;
     }
 
-    @Override
-    public List<DslEntry> emitThen(RuleModel model) {
-        return List.of();
+    /**
+     * Normalise operators into a small stable set for DSL keys/phrasing.
+     * Adjust mapping as your Constraint operators become clearer.
+     */
+    private static String normaliseOperator(String op) {
+        if (op == null) return "==";
+
+        String o = op.trim();
+        if (o.isEmpty()) return "==";
+
+        // Common possibilities from your earlier work
+        if (o.equals("=") || o.equals("==") || o.equalsIgnoreCase("EQUALS")) return "==";
+        if (o.equals("!=") || o.equalsIgnoreCase("NOT_EQUALS")) return "!=";
+        if (o.equalsIgnoreCase("IN")) return "IN";
+        if (o.equalsIgnoreCase("NOT_IN")) return "NOT_IN";
+        if (o.equals(">") || o.equalsIgnoreCase("GT")) return ">";
+        if (o.equals(">=") || o.equalsIgnoreCase("GTE")) return ">=";
+        if (o.equals("<") || o.equalsIgnoreCase("LT")) return "<";
+        if (o.equals("<=") || o.equalsIgnoreCase("LTE")) return "<=";
+
+        return o.toUpperCase();
     }
 }
+
