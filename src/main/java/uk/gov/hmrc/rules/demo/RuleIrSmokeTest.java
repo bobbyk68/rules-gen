@@ -508,7 +508,10 @@ public class RuleIrSmokeTest {
         System.out.println("DSL [when] entries:");
         for (DslEntry e : emission.whenEntries()) {
             System.out.println("  " + e.getLhs());
-            System.out.println("    = " + e.getRhs());
+            String rhs = e.getRhs();
+            String indented = rhs.replace("\n", "\n      ");
+            System.out.println("    = " + indented);
+
         }
 
         System.out.println("DSL [then] entries:");
