@@ -2,39 +2,29 @@ package uk.gov.hmrc.rules.dsl;
 
 public class Br675WhenRhsRenderer {
 
-    /**
-     * Anchor RHS: emit the same "bible" DRL shapes you showed.
-     * <p>
-     * EXISTS example:
-     * $sp: GoodsItemSpecialProcedureTypeFact(
-     * $giSeq: goodsItemSequenceNumber
-     * )
-     * <p>
-     * NOT_EXISTS example:
-     * not GoodsItemSpecialProcedureTypeFact(
-     * goodsItemSequenceNumber == $giSeq
-     * )
-     */
+    private final Br675FactDslRegistry registry = new Br675FactDslRegistry();
+
     public String renderAnchor(uk.gov.hmrc.rules.ir.FactConditionNode fc, String parentAnchorKey) {
 
-        Br675FactDslRegistry.FactSpec spec = new Br675FactDslRegistry().resolve(fc);
-
+        FactDslRegistry.Resolved resolved = registry.resolve(fc);
+        FactDslRegistry.AnchorSpec spec = resolved.anchor();
 
         boolean negated =
                 fc.getExistence() == uk.gov.hmrc.rules.ir.FactConditionNode.Existence.NOT_EXISTS;
 
         if (!negated) {
-            // "exists" form binds $giSeq from the fact (exactly like your screenshot)
+            // Binder: binds $giSeq from the fact
             return spec.alias() + ": " + spec.factClass() + "(\n"
-                    + "    " + spec.seqVar() + ": " + spec.seqField() + "\n"
+                    + "    " + spec.seqVar() + ": " + spec.bindField() + "\n"
                     + ")";
         }
 
-        // "no matching" form references $giSeq (again like your screenshot)
+        // Negated/joined: constrains child fact using join field == $giSeq
         return "not " + spec.factClass() + "(\n"
-                + "    " + spec.seqField() + " == " + spec.seqVar() + "\n"
+                + "    " + spec.joinField() + " == " + spec.seqVar() + "\n"
                 + ")";
     }
+
 
     /**
      * Dash RHS: bible style constraint-only.
