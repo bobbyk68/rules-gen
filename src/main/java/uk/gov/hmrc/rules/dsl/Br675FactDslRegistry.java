@@ -3,10 +3,11 @@ package uk.gov.hmrc.rules.dsl;
 public class Br675FactDslRegistry {
 
     public record FactSpec(
-            String dslAlias,          // "$sp"
-            String droolsFactType,    // "GoodsItemSpecialProcedureTypeFact"
+            String alias,          // "$sp"
+            String factClass,    // "GoodsItemSpecialProcedureTypeFact"
             String seqVar,            // "$giSeq"
-            String seqFieldName       // "goodsItemSequenceNumber"
+            String seqField
+            // "goodsItemSequenceNumber"
     ) {}
 
     /**
