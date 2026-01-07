@@ -41,18 +41,41 @@ public class RuleIrGenerator {
                 child.setRole(pc.getRole());
                 child.setFieldTypeLabel(pc.getFieldTypeLabel());
 
-                // ==================================================
-                // ADD: Existence semantics for BR675 DSL/DSLR wording
-                // PRIMARY = positive existence, SECONDARY = "no matching ... exists"
-                // ==================================================
-                if (pc.getRole() == ConditionRole.SECONDARY) {
-                    child.setExistence(FactConditionNode.Existence.NOT_EXISTS);
-                } else {
+                ParsedCondition.Quantifier q = pc.getQuantifier();
+                boolean isAll = q == ParsedCondition.Quantifier.ALL;
+
+                String op = pc.getOperator() == null
+                        ? ""
+                        : pc.getOperator().trim().toUpperCase();
+
+                // IF (PRIMARY) must never be flipped. THEN (SECONDARY) becomes a violation trigger.
+                boolean isThen = pc.getRole() == ConditionRole.SECONDARY;
+
+                if (!isThen) {
+                    // IF side: scenario gate (keep it literal)
                     child.setExistence(FactConditionNode.Existence.EXISTS);
+                    // op unchanged
+                } else {
+                    // THEN side: requirement -> violation trigger
+                    if (isAll) {
+                        // ALL must satisfy X -> violation when EXISTS(not X)
+                        child.setExistence(FactConditionNode.Existence.EXISTS);
+                        op = negateOperator(op);   // IN->NOT_IN, ==->!=, etc.
+                    } else {
+                        // AT_LEAST_ONE must satisfy X -> violation when NOT_EXISTS(X)
+                        child.setExistence(FactConditionNode.Existence.NOT_EXISTS);
+                        // op unchanged
+                    }
                 }
 
+                System.out.println("DEBUG IR: role=" + pc.getRole()
+                        + " quant=" + pc.getQuantifier()
+                        + " existence=" + child.getExistence()
+                        + " field=" + pc.getFieldName()
+                        + " op=" + op
+                        + " values=" + pc.getValues());
 
-                String op = pc.getOperator() == null ? "" : pc.getOperator().trim().toUpperCase();
+
 
                 // Unary operators: no RHS values, but still a real constraint
                 if (isUnary(op)) {
@@ -66,10 +89,20 @@ public class RuleIrGenerator {
                     // no field constraint
                 } else if (pc.getValues().isEmpty()) {
                     throw new IllegalStateException("Operator " + op + " requires values for " + pc);
-                } else if ("IN".equals(op) || "NOT_IN".equals(op)) {
+                } else {
+                    // If IN/NOT_IN has a single value, collapse to ==/!= for cleaner DSL keys/wording
+                    if ("IN".equals(op) && pc.getValues().size() == 1) {
+                        op = "==";
+                    }
+                    if ("NOT_IN".equals(op) && pc.getValues().size() == 1) {
+                        op = "!=";
+                    }
+
+
+                } if ("IN".equals(op) || "NOT_IN".equals(op)) {
                     child.getFieldConstraints().put(
                             pc.getFieldName(),
-                            new Constraint(op, Boolean.TRUE)
+                            new Constraint(op, pc.getValues())
                     );
 
                 } else {
@@ -84,12 +117,34 @@ public class RuleIrGenerator {
 
         }
 
+
+
         EmitErrorActionNode emit = new EmitErrorActionNode();
         emit.setBrCode(deriveBrCode(row));
         emit.setDmsErrorCode(row.errorCode());
         model.getActions().add(emit);
 
         return model;
+    }
+    private String negateOperator(String op) {
+        return switch (op) {
+            case "IN" -> "NOT_IN";
+            case "NOT_IN" -> "IN";
+            case "==" -> "!=";
+            case "!=" -> "==";
+            default -> throw new IllegalArgumentException("No negation for operator: " + op);
+        };
+    }
+
+
+    private String invertForAll(String op) {
+        return switch (op) {
+            case "==" -> "!=";
+            case "!=" -> "==";
+            case "IN" -> "NOT_IN";
+            case "NOT_IN" -> "IN";
+            default -> op;
+        };
     }
 
     private void addHeaderConstraints(ParentConditionNode parent, RuleRow row) {

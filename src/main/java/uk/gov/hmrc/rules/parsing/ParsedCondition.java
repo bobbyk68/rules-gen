@@ -20,7 +20,8 @@ public class ParsedCondition {
                            String operator,
                            java.util.List<String> values,
                            String fieldTypeLabel,
-                           ConditionRole role) {
+                           ConditionRole role,
+                           Quantifier quantifier) {
         this.entityType = entityType;
         this.parentAnchorKey = parentAnchorKey;
         this.fieldName = fieldName;
@@ -28,7 +29,9 @@ public class ParsedCondition {
         this.values = java.util.List.copyOf(values);
         this.fieldTypeLabel = fieldTypeLabel;
         this.role = role;
+        this.quantifier = quantifier == null ? Quantifier.AT_LEAST_ONE : quantifier;
     }
+
 
     public String getEntityType() {
         return entityType;

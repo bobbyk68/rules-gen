@@ -14,9 +14,30 @@ public class Br675FactDslRegistry implements FactDslRegistry {
 
         // Default dash (you can evolve this later based on operator/fieldName)
         DashSpec dash = new DashSpec(
-                "- code == {value}",
+                "- with code == {value}",
                 "code == {value}"
         );
+
+        if ("GoodsItem".equals(safe(fc.getFactType()))) {
+
+            dash = new DashSpec(
+                    "- {field} == {value}",     // or whatever default you want
+                    "{field} == {value}"
+            );
+
+            AnchorSpec anchor = new AnchorSpec(
+                    "Goods item exists",
+                    "$g1: GoodsItemFact( $giSeq : sequenceNumber )",
+                    "$g1",
+                    "GoodsItemFact",
+                    "$giSeq",
+                    "goodsItemSequenceNumber",          // bindField on GoodsItemFact
+                    "goodsItemSequenceNumber"           // joinField (if you ever need it)
+            );
+
+            return new Resolved(anchor, dash);
+        }
+
 
         // Matches your screenshot example
         if (label.contains("special procedure")) {
@@ -38,8 +59,22 @@ public class Br675FactDslRegistry implements FactDslRegistry {
             AnchorSpec anchor = new AnchorSpec(
                     "No matching goods item with additional information exists",
                     "...",
-                    "$ai",
+                    "$giAi",
                     "GoodsItemAdditionalInformationFact",
+                    "$giSeq",
+                    "goodsItemSequenceNumber",   // bindField (unused in NOT_EXISTS path)
+                    "goodsItemSequenceNumber"    // joinField (this is the key thing)
+            );
+
+            return new Resolved(anchor, dash);
+        }
+
+        if (label.contains("additional document")) {
+            AnchorSpec anchor = new AnchorSpec(
+                    "No matching goods item with additional document exists",
+                    "...",
+                    "$giAdDoc",
+                    "GoodsItemAdditionalDocumentFact",
                     "$giSeq",
                     "goodsItemSequenceNumber",   // bindField (unused in NOT_EXISTS path)
                     "goodsItemSequenceNumber"    // joinField (this is the key thing)

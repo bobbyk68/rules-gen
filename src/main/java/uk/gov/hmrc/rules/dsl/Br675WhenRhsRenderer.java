@@ -12,9 +12,23 @@ public class Br675WhenRhsRenderer {
         boolean negated =
                 fc.getExistence() == uk.gov.hmrc.rules.ir.FactConditionNode.Existence.NOT_EXISTS;
 
+        // ---- Alias override (dev-style $sp_match etc.) ----
+        String alias = spec.alias();
+
+        boolean isSecondary = fc.getRole() == uk.gov.hmrc.rules.parsing.ConditionRole.SECONDARY;
+
+        // Only do this for anchors that are "special procedure" child facts
+        boolean isSpecialProcedureFact =
+                "GoodsItemSpecialProcedureTypeFact".equals(spec.factClass());
+
+        if (isSecondary && isSpecialProcedureFact) {
+            alias = "$sp_match";
+        }
+        // -----------------------------------------------
+
         if (!negated) {
             // Binder: binds $giSeq from the fact
-            return spec.alias() + ": " + spec.factClass() + "(\n"
+            return alias + ": " + spec.factClass() + "(\n"
                     + "    " + spec.seqVar() + ": " + spec.bindField() + "\n"
                     + ")";
         }
@@ -24,6 +38,7 @@ public class Br675WhenRhsRenderer {
                 + "    " + spec.joinField() + " == " + spec.seqVar() + "\n"
                 + ")";
     }
+
 
 
     /**

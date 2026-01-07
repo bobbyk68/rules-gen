@@ -24,10 +24,28 @@ public class RuleIrSmokeTest {
         RuleIrGenerator irGen = new RuleIrGenerator();
 
         List<RuleRow> rows = new ArrayList<>();
+        rows.add(new RuleRow(
+                "BR675_1125",
+                List.of("all"),
+                List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals B02",
+                "all GoodsItem.specialProcedures.code must is not one of B03",
+                "DMS12057",
+                "BR675"
+        ));
         rows.add(sampleSpAi());
-//        rows.add(sampleSpSpDifferentGi());
-//        rows.add(sampleAdDocAi());
-//        addRows(rows);
+        rows.add(new RuleRow(
+                "BR675_1067",
+                List.of("all"),
+                List.of("C211"),
+                "there is at least one GoodsItem.requestedProcedure.code equals A01",
+                "all GoodsItem.previousProcedure.code must is one of B02,B03",
+                "DMS12056",
+                "BR675"
+        ));
+        rows.add(sampleSpSpDifferentGi());
+        rows.add(sampleAiDocAd());
+        addRows(rows);
 // ======================================================
 // Consolidated BR675 smoke rows
 // - Exact duplicates removed (your IDs win)
@@ -43,7 +61,9 @@ public class RuleIrSmokeTest {
             System.out.println();
 
             ParsedCondition ifCond   = parser.parseIf(row.ifCondition());
+
             ParsedCondition thenCond = parser.parseThen(row.thenCondition());
+            System.out.println((thenCond.toString()));
 
             RuleModel model = irGen.generate(row, java.util.List.of(ifCond, thenCond));
             String ruleSet = extractRuleSet(row.id());           // BR675
@@ -58,25 +78,9 @@ public class RuleIrSmokeTest {
     private static void addRows(List<RuleRow> rows) {
         // --- Your original set (kept) ---
 
-        rows.add(new RuleRow(
-                "BR675_1067",
-                List.of("all"),
-                List.of("C211"),
-                "there is at least one GoodsItem.requestedProcedure.code equals A01",
-                "all GoodsItem.previousProcedure.code must is one of B02,B03",
-                "DMS12056",
-                "BR675"
-        ));
 
-        rows.add(new RuleRow(
-                "BR675_1125",
-                List.of("all"),
-                List.of("C211"),
-                "there is at least one GoodsItem.specialProcedures.code equals B02",
-                "all GoodsItem.specialProcedures.code must is not one of B03",
-                "DMS12057",
-                "BR675"
-        ));
+
+
 
         rows.add(new RuleRow(
                 "BR675_1353",
@@ -547,13 +551,13 @@ public class RuleIrSmokeTest {
         );
     }
 
-    private static RuleRow sampleAdDocAi() {
+    private static RuleRow sampleAiDocAd() {
         return new RuleRow(
-            "BR675_9999",
+            "BR675_1346",
             List.of("all"),
             List.of("C211"),
-            "there is at least one GoodsItem.additionalDocuments.type.code must equals AD1",
-            "at least one GoodsItem.additionalInformation.code must equals INFO1",
+                "there is at least one GoodsItem.additionalInformation.code equals INFO1",
+                "at least one GoodsItem.additionalDocuments.type.code must equals AD1",
             "DMS99999",
             "BR675"
         );

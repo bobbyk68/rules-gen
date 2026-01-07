@@ -2,6 +2,9 @@ package uk.gov.hmrc.rules.dsl;
 
 import uk.gov.hmrc.rules.ir.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class Br675DslEmitter implements RuleSetDslEmitter {
 
     private final DslWording wording = new DslWording();
@@ -24,6 +27,7 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
     public java.util.List<DslEntry> emitWhen(RuleModel model) {
 
         java.util.List<DslEntry> when = new java.util.ArrayList<>();
+        Set<String> emittedAnchors = new HashSet<>();
 
         for (ConditionNode n : model.getConditions()) {
             if (!(n instanceof FactConditionNode fc)) {
@@ -36,17 +40,42 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
 
             // (A) Anchor DSL entry (exists/bind/join)
             {
-                String lhs = wording.anchorLhs(fc, quantifier, parentAnchorKey, fc.getFieldTypeLabel());
+                String factType = fc.getFactType();
+
+                boolean isGoodsItemFact = "GoodsItemFact".equalsIgnoreCase(factType);
+
+                //   For GoodsItemFact, don't let fieldTypeLabel leak into the anchor wording.
+                String labelForWording = isGoodsItemFact ? null : fc.getFieldTypeLabel();
+
+                String existenceKey = (fc.getExistence() == FactConditionNode.Existence.NOT_EXISTS)
+                        ? "NOT_EXISTS"
+                        : "EXISTS";
+
+
+                // GoodsItemFact anchors should always be generic wording.
+                // (In your output RHS is GoodsItemFact, but factType here is likely "GoodsItemFact" already.)
+                boolean isGoodsItem =
+                        "GoodsItemFact".equalsIgnoreCase(factType)
+                                || "GoodsItem".equalsIgnoreCase(factType);
+
+                labelForWording = isGoodsItem ? null : fc.getFieldTypeLabel();
+
+                String lhs = wording.anchorLhs(fc, quantifier, parentAnchorKey, labelForWording);
 
                 String rhs = whenRhs.renderAnchor(fc, parentAnchorKey);
+                if (emittedAnchors.add(rhs)) {
 
-                when.add(new DslEntry(
-                        new DslKey("BR675", "condition", quantifier, parentAnchorKey,
-                                fc.getFactType(), "__ANCHOR__", "EXISTS"),
-                        "condition",
-                        lhs,
-                        rhs
-                ));
+                    when.add(new DslEntry(
+                            new DslKey("BR675", "condition", quantifier, parentAnchorKey,
+                                    factType, "__ANCHOR__", existenceKey),
+                            "condition",
+                            lhs,
+                            rhs
+                    ));
+                }
+
+
+
             }
 
             // (B) Dash DSL entries (constraints)
@@ -56,7 +85,25 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
 
                 String op = normaliseOperator(c.getOperator());
 
-                String lhs = wording.dashLhs(field, op);
+                String displayField;
+
+                boolean isGoodsItem =
+                        "GoodsItem".equalsIgnoreCase(fc.getFactType())
+                                || "GoodsItemFact".equalsIgnoreCase(fc.getFactType());
+
+                if (isGoodsItem) {
+                    displayField = switch (field) {
+                        case "requestedProcedureCode" -> "requested procedure code";
+                        case "previousProcedureCode"  -> "previous procedure code";
+                        default -> field; // fallback
+                    };
+                } else {
+                    String label = fc.getFieldTypeLabel();
+                    displayField = (label == null || label.isBlank()) ? field : (label + " " + field);
+                }
+
+                String lhs = wording.dashLhs(displayField, op);
+
                 String rhs = whenRhs.renderFieldConstraint(fc, field, op);
 
                 when.add(new DslEntry(

@@ -130,6 +130,12 @@ public class TextConditionParser implements ConditionParser {
         // 4) VALUES – often empty; in your real project codes may come from other cols
         java.util.List<String> values = parseValues(valuesPart);
 
+        ParsedCondition.Quantifier quantifier =
+                lower.startsWith("all ")
+                        ? ParsedCondition.Quantifier.ALL
+                        : ParsedCondition.Quantifier.AT_LEAST_ONE;
+
+
         return new ParsedCondition(
                 field.getEntityType(),
                 field.getParentAnchorKey(),
@@ -137,7 +143,8 @@ public class TextConditionParser implements ConditionParser {
                 operatorCode,
                 values,
                 field.getFieldTypeLabel(),
-                role
+                role,
+                quantifier // <-- add this (or equivalent)
         );
     }
 
