@@ -144,6 +144,8 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
         return then;
     }
 
+
+
     /**
      * Normalise operators into a small stable set for DSL keys/phrasing.
      * Adjust mapping as your Constraint operators become clearer.
@@ -166,5 +168,23 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
 
         return o.toUpperCase();
     }
+
+    private static boolean isUnary(String op) {
+        if (op == null) return false;
+        return switch (op.toUpperCase()) {
+            case "IS_PROVIDED", "IS_NOT_PROVIDED" -> true;
+            default -> false;
+        };
+    }
+
+    private String unaryDashLhs(String displayField, String op) {
+        // Keep DSL keys human and stable. No {value}.
+        return switch (op.toUpperCase()) {
+            case "IS_PROVIDED"     -> "- with " + displayField + " provided";
+            case "IS_NOT_PROVIDED" -> "- with " + displayField + " not provided";
+            default -> "- with " + displayField + " " + op;
+        };
+    }
+
 }
 

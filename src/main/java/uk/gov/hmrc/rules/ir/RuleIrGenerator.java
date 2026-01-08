@@ -76,19 +76,23 @@ public class RuleIrGenerator {
                         + " values=" + pc.getValues());
 
 
+                System.out.println("DEBUG isUnary? op=" + op + " -> " + isUnary(op)
+                        + " values.size=" + pc.getValues().size());
 
                 // Unary operators: no RHS values, but still a real constraint
                 if (isUnary(op)) {
                     child.getFieldConstraints().put(
                             pc.getFieldName(),
-                            new Constraint(op, Boolean.TRUE) // or Boolean.TRUE, depending on your Constraint design
+                            new Constraint(op, Boolean.TRUE)
                     );
 
-                    // Pure existence: presence of the child fact is enough
+                // Pure existence: presence of the child fact is enough
                 } else if ("EXISTS".equals(op)) {
                     // no field constraint
+
                 } else if (pc.getValues().isEmpty()) {
                     throw new IllegalStateException("Operator " + op + " requires values for " + pc);
+
                 } else {
                     // If IN/NOT_IN has a single value, collapse to ==/!= for cleaner DSL keys/wording
                     if ("IN".equals(op) && pc.getValues().size() == 1) {
@@ -98,19 +102,19 @@ public class RuleIrGenerator {
                         op = "!=";
                     }
 
-
-                } if ("IN".equals(op) || "NOT_IN".equals(op)) {
-                    child.getFieldConstraints().put(
-                            pc.getFieldName(),
-                            new Constraint(op, pc.getValues())
-                    );
-
-                } else {
-                    child.getFieldConstraints().put(
-                            pc.getFieldName(),
-                            new Constraint(op, pc.getValues().get(0))
-                    );
+                    if ("IN".equals(op) || "NOT_IN".equals(op)) {
+                        child.getFieldConstraints().put(
+                                pc.getFieldName(),
+                                new Constraint(op, pc.getValues())
+                        );
+                    } else {
+                        child.getFieldConstraints().put(
+                                pc.getFieldName(),
+                                new Constraint(op, pc.getValues().get(0))
+                        );
+                    }
                 }
+
 
                 model.getConditions().add(child);
             }
@@ -126,26 +130,27 @@ public class RuleIrGenerator {
 
         return model;
     }
-    private String negateOperator(String op) {
-        return switch (op) {
-            case "IN" -> "NOT_IN";
+
+
+    private static String negateOperator(String op) {
+        if (op == null) return "";
+
+        return switch (op.trim().toUpperCase()) {
+            case "IN"     -> "NOT_IN";
             case "NOT_IN" -> "IN";
-            case "==" -> "!=";
-            case "!=" -> "==";
+            case "=="     -> "!=";
+            case "="      -> "!=";
+            case "!="     -> "==";
+
+            case "<"      -> ">=";
+            case "<="     -> ">";
+            case ">"      -> "<=";
+            case ">="     -> "<";
+
             default -> throw new IllegalArgumentException("No negation for operator: " + op);
         };
     }
 
-
-    private String invertForAll(String op) {
-        return switch (op) {
-            case "==" -> "!=";
-            case "!=" -> "==";
-            case "IN" -> "NOT_IN";
-            case "NOT_IN" -> "IN";
-            default -> op;
-        };
-    }
 
     private void addHeaderConstraints(ParentConditionNode parent, RuleRow row) {
 
@@ -193,8 +198,15 @@ public class RuleIrGenerator {
         return (idx > 0) ? id.substring(0, idx) : id;
     }
 
-    boolean isUnary(String op) {
-        return "IS_PROVIDED".equals(op) || "IS_PRESENT".equals(op);
+    private static boolean isUnary(String op) {
+        if (op == null) return false;
+        return switch (op.trim().toUpperCase()) {
+            case "IS_PROVIDED", "IS_NOT_PROVIDED",
+                 "IS_PRESENT", "IS_NOT_PRESENT",
+                 "EXISTS", "NOT_EXISTS" -> true; // include what you actually use
+            default -> false;
+        };
     }
+
 
 }
