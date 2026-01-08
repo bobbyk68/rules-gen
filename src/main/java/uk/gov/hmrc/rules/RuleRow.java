@@ -1,5 +1,8 @@
 package uk.gov.hmrc.rules;
 
+import uk.gov.hmrc.rules.ruleset.RuleSet;
+import uk.gov.hmrc.rules.ruleset.RuleSetResolver;
+
 import java.util.List;
 
 /**
@@ -16,6 +19,9 @@ public class RuleRow {
     private final String thenCondition;
     private final String errorCode;
     private final String param;
+    private final RuleSet ruleSet;
+
+
 
     public RuleRow(String id,
                    List<String> declarationType,
@@ -23,7 +29,8 @@ public class RuleRow {
                    String ifCondition,
                    String thenCondition,
                    String errorCode,
-                   String param) {
+                   String param,
+                   RuleSet ruleSet) {
         this.id = id;
         this.declarationType = List.copyOf(declarationType);
         this.procedureCategory = List.copyOf(procedureCategory);
@@ -31,6 +38,25 @@ public class RuleRow {
         this.thenCondition = thenCondition;
         this.errorCode = errorCode;
         this.param = param;
+        this.ruleSet = ruleSet;
+    }
+
+    public RuleRow(String id,
+                   List<String> declarationType,
+                   List<String> procedureCategory,
+                   String ifCondition,
+                   String thenCondition,
+                   String errorCode,
+                   String param
+                   ) {
+        this.id = id;
+        this.declarationType = List.copyOf(declarationType);
+        this.procedureCategory = List.copyOf(procedureCategory);
+        this.ifCondition = ifCondition;
+        this.thenCondition = thenCondition;
+        this.errorCode = errorCode;
+        this.param = param;
+        this.ruleSet = RuleSetResolver.fromRuleId(id);
     }
 
     public String id() {
@@ -59,5 +85,9 @@ public class RuleRow {
 
     public String param() {
         return param;
+    }
+
+    public RuleSet getRuleSet() {
+        return ruleSet;
     }
 }

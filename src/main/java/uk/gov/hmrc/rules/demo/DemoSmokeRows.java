@@ -1,56 +1,100 @@
 package uk.gov.hmrc.rules.demo;
 
-import uk.gov.hmrc.rules.RuleRow;
-import uk.gov.hmrc.rules.dsl.*;
-import uk.gov.hmrc.rules.ir.ActionNode;
-import uk.gov.hmrc.rules.ir.EmitErrorActionNode;
-import uk.gov.hmrc.rules.ir.ConditionNode;
-import uk.gov.hmrc.rules.ir.FactConditionNode;
-import uk.gov.hmrc.rules.ir.ParentConditionNode;
-import uk.gov.hmrc.rules.ir.RuleIrGenerator;
-import uk.gov.hmrc.rules.ir.RuleModel;
-import uk.gov.hmrc.rules.parsing.ConditionParser;
-import uk.gov.hmrc.rules.parsing.ParsedCondition;
-import uk.gov.hmrc.rules.parsing.TextConditionParser;
-import uk.gov.hmrc.rules.pipeline.RulePipelineRegistry;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class RuleIrSmokeTest {
+import uk.gov.hmrc.rules.RuleRow;
 
-    public static void main(String[] args) {
+public final class DemoSmokeRows {
+
+    private DemoSmokeRows() {
+    }
+
+    public static List<RuleRow> create() {
+        // KEEP YOUR EXISTING ROWS HERE.
+        // If your current RuleRow constructor requires RuleSet, then include it here directly.
+        // If not, keep legacy creation and let DemoSmokeTestResolver add it.
+
+        List<RuleRow> rows = new ArrayList<>();
+        rows.add(new RuleRow(
+                "BR675_1125",
+                List.of("all"),
+                List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals B02",
+                "all GoodsItem.specialProcedures.code must is not one of B03",
+                "DMS12057",
+                "BR675"
+        ));
+        rows.add(sampleSpAi());
+        rows.add(new RuleRow(
+                "BR675_1067",
+                List.of("all"),
+                List.of("C211"),
+                "there is at least one GoodsItem.requestedProcedure.code equals A01",
+                "all GoodsItem.previousProcedure.code must is one of B02,B03",
+                "DMS12056",
+                "BR675"
+        ));
+
+        rows.add(new RuleRow(
+                "BR675_1335",
+                List.of("all"),
+                List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "at least one GoodsItem.invoiceAmount must is provided",
+                "DMS_SMOKE_BR675_UNK_R29",
+                "BR675"
+        ));
+        rows.add(sampleSpSpDifferentGi());
+        rows.add(sampleAiDocAd());
+        addRows(rows);
+        return rows;
+    }
 
 
 
+    private static RuleRow sampleSpAi() {
+        return new RuleRow(
+                "BR675_1231",
+                List.of("J", "F", "C"),
+                List.of("C211", "C21E"),
+                "there is at least one GoodsItem.specialProcedures.code equals 72M",
+                "at least one GoodsItem.additionalInformation.code must equals MOVE3",
+                "DMS12056",
+                "BR675"
+        );
+    }
 
-// ======================================================
-// Consolidated BR675 smoke rows
-// - Exact duplicates removed (your IDs win)
-// - ID collisions resolved by suffixing (_A/_B/_SMOKE)
-// ======================================================
+    private static RuleRow sampleSpSpDifferentGi() {
+        return new RuleRow(
+                "BR675_1125",
+                List.of("all"),
+                List.of("C211", "H1", "H2", "H3", "H4", "H5", "I1", "C21IEIDR"),
+                "there is at least one GoodsItem.specialProcedures.code equals B02",
+                "at least one GoodsItem.specialProcedures.code must be one of B03",
+                "DMS12056",
+                "BR675"
+        );
+    }
 
-        RulePipelineRegistry registry = new RulePipelineRegistry();
-
-        // 1) your existing rows creation (keep it as-is)
-        List<RuleRow> rows = DemoSmokeRows.create();
-
-        for (RuleRow row : rows) {
-            System.out.println("==================================================");
-            System.out.println("RuleRow id  : " + row.id());
-            System.out.println("IF   (excel): " + row.ifCondition());
-            System.out.println("THEN (excel): " + row.thenCondition());
-            System.out.println();
-
-            registry.get(row.getRuleSet()).process(row);
-            System.out.println();
-
-        }
-
+    private static RuleRow sampleAiDocAd() {
+        return new RuleRow(
+                "BR675_1346",
+                List.of("all"),
+                List.of("C211"),
+                "there is at least one GoodsItem.additionalInformation.code equals INFO1",
+                "at least one GoodsItem.additionalDocuments.type.code must equals AD1",
+                "DMS99999",
+                "BR675"
+        );
     }
 
     private static void addRows(List<RuleRow> rows) {
         // --- Your original set (kept) ---
+
+
+
+
 
         rows.add(new RuleRow(
                 "BR675_1353",
@@ -465,72 +509,4 @@ public class RuleIrSmokeTest {
         ));
     }
 
-
-
-    private static void debugPrintDsl(DslEmission emission) {
-        System.out.println("DSL [when] entries:");
-        for (DslEntry e : emission.whenEntries()) {
-            System.out.println("  " + e.getLhs());
-            String rhs = e.getRhs();
-            String indented = rhs.replace("\n", "\n      ");
-            System.out.println("    = " + indented);
-
-        }
-
-        System.out.println("DSL [then] entries:");
-        for (DslEntry e : emission.thenEntries()) {
-            System.out.println("  " + e.getLhs());
-            System.out.println("    = " + e.getRhs());
-        }
-    }
-
-
-
-    private static void debugPrintParsedConditions(ParsedCondition ifCond,
-                                                   ParsedCondition thenCond) {
-        System.out.println("Parsed IF condition:");
-        debugPrintParsedCondition(ifCond);
-        System.out.println();
-
-        System.out.println("Parsed THEN condition:");
-        debugPrintParsedCondition(thenCond);
-        System.out.println();
-    }
-
-    private static void debugPrintParsedCondition(ParsedCondition pc) {
-        System.out.println("  entityType      = " + pc.getEntityType());
-        System.out.println("  parentAnchorKey = " + pc.getParentAnchorKey());
-        System.out.println("  fieldName       = " + pc.getFieldName());
-        System.out.println("  operator        = " + pc.getOperator());
-        System.out.println("  values          = " + pc.getValues());
-        System.out.println("  fieldTypeLabel  = " + pc.getFieldTypeLabel());
-        System.out.println("  role            = " + pc.getRole());
-        System.out.println("  canonical       = " + pc.canonicalPathKey());
-    }
-
-    private static void debugPrintIr(RuleModel model) {
-        System.out.println("IR conditions:");
-        for (ConditionNode node : model.getConditions()) {
-            if (node instanceof ParentConditionNode parent) {
-                System.out.println("  Parent: alias=" + parent.getAlias()
-                    + ", factType=" + parent.getFactType()
-                    + ", constraints=" + parent.getFieldConstraints());
-            } else if (node instanceof FactConditionNode fact) {
-                System.out.println("  Child:  alias=" + fact.getAlias()
-                    + ", factType=" + fact.getFactType()
-                    + ", parentAlias=" + fact.getParentAlias()
-                    + ", role=" + fact.getRole()
-                    + ", label=" + fact.getFieldTypeLabel()
-                    + ", constraints=" + fact.getFieldConstraints());
-            }
-        }
-
-        System.out.println("Actions:");
-        for (ActionNode a : model.getActions()) {
-            if (a instanceof EmitErrorActionNode emit) {
-                System.out.println("  Emit BR=" + emit.getBrCode()
-                    + ", DMS=" + emit.getDmsErrorCode());
-            }
-        }
-    }
 }
