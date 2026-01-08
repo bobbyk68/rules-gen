@@ -62,9 +62,20 @@ public class RuleIrGenerator {
                         child.setExistence(FactConditionNode.Existence.EXISTS);
                         op = negateOperator(op);   // IN->NOT_IN, ==->!=, etc.
                     } else {
-                        // AT_LEAST_ONE must satisfy X -> violation when NOT_EXISTS(X)
-                        child.setExistence(FactConditionNode.Existence.NOT_EXISTS);
-                        // op unchanged
+                        // AT_LEAST_ONE must satisfy X
+                        // Default violation: NOT_EXISTS(X)
+                        //
+                        // BUT bible wants unary "provided" inverted as EXISTS(not provided)
+                        if ("IS_PROVIDED".equals(op)) {
+                            child.setExistence(FactConditionNode.Existence.EXISTS);
+                            op = "IS_NOT_PROVIDED";
+                        } else if ("IS_NOT_PROVIDED".equals(op)) {
+                            child.setExistence(FactConditionNode.Existence.EXISTS);
+                            op = "IS_PROVIDED";
+                        } else {
+                            child.setExistence(FactConditionNode.Existence.NOT_EXISTS);
+                            // op unchanged
+                        }
                     }
                 }
 
@@ -120,8 +131,6 @@ public class RuleIrGenerator {
             }
 
         }
-
-
 
         EmitErrorActionNode emit = new EmitErrorActionNode();
         emit.setBrCode(deriveBrCode(row));

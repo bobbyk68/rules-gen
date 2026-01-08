@@ -77,8 +77,7 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
 
 
             }
-
-            // (B) Dash DSL entries (constraints)
+// (B) Dash DSL entries (constraints)
             for (java.util.Map.Entry<String, Constraint> e : fc.getFieldConstraints().entrySet()) {
                 String field = e.getKey();
                 Constraint c = e.getValue();
@@ -86,7 +85,6 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
                 String op = normaliseOperator(c.getOperator());
 
                 String displayField;
-
                 boolean isGoodsItem =
                         "GoodsItem".equalsIgnoreCase(fc.getFactType())
                                 || "GoodsItemFact".equalsIgnoreCase(fc.getFactType());
@@ -102,9 +100,23 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
                     displayField = (label == null || label.isBlank()) ? field : (label + " " + field);
                 }
 
-                String lhs = wording.dashLhs(displayField, op);
+                final String lhs;
+                final String rhs;
 
-                String rhs = whenRhs.renderFieldConstraint(fc, field, op);
+                if (isUnary(op)) {
+                    // ✅ Unary: no {value}, and RHS must be real DRL
+                    lhs = unaryDashLhs(displayField, op);
+
+                    rhs = switch (op) {
+                        case "IS_PROVIDED"     -> field + " != null";
+                        case "IS_NOT_PROVIDED" -> field + " == null";
+                        default -> throw new IllegalStateException("Unsupported unary op: " + op);
+                    };
+                } else {
+                    // ✅ Non-unary: keep existing path
+                    lhs = wording.dashLhs(displayField, op);
+                    rhs = whenRhs.renderFieldConstraint(fc, field, op);
+                }
 
                 when.add(new DslEntry(
                         new DslKey("BR675", "condition", quantifier, parentAnchorKey,
@@ -114,6 +126,7 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
                         rhs
                 ));
             }
+
         }
 
         return when;
