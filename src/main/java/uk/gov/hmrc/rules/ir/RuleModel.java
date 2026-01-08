@@ -9,6 +9,13 @@ public class RuleModel {
     private final List<ConditionNode> conditions = new ArrayList<>();
     private final List<ActionNode> actions = new ArrayList<>();
 
+    private EmissionScope scope;
+
+    //public RuleModel(String ruleId) { this.id = ruleId; }
+
+    public EmissionScope getScope() { return scope; }
+    public void setScope(EmissionScope scope) { this.scope = scope; }
+
     public String getId() {
         return id;
     }

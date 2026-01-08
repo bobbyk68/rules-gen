@@ -24,25 +24,25 @@ public class RuleIrSmokeTest {
         RuleIrGenerator irGen = new RuleIrGenerator();
 
         List<RuleRow> rows = new ArrayList<>();
-//        rows.add(new RuleRow(
-//                "BR675_1125",
-//                List.of("all"),
-//                List.of("C211"),
-//                "there is at least one GoodsItem.specialProcedures.code equals B02",
-//                "all GoodsItem.specialProcedures.code must is not one of B03",
-//                "DMS12057",
-//                "BR675"
-//        ));
-//        rows.add(sampleSpAi());
-//        rows.add(new RuleRow(
-//                "BR675_1067",
-//                List.of("all"),
-//                List.of("C211"),
-//                "there is at least one GoodsItem.requestedProcedure.code equals A01",
-//                "all GoodsItem.previousProcedure.code must is one of B02,B03",
-//                "DMS12056",
-//                "BR675"
-//        ));
+        rows.add(new RuleRow(
+                "BR675_1125",
+                List.of("all"),
+                List.of("C211"),
+                "there is at least one GoodsItem.specialProcedures.code equals B02",
+                "all GoodsItem.specialProcedures.code must is not one of B03",
+                "DMS12057",
+                "BR675"
+        ));
+        rows.add(sampleSpAi());
+        rows.add(new RuleRow(
+                "BR675_1067",
+                List.of("all"),
+                List.of("C211"),
+                "there is at least one GoodsItem.requestedProcedure.code equals A01",
+                "all GoodsItem.previousProcedure.code must is one of B02,B03",
+                "DMS12056",
+                "BR675"
+        ));
 
         rows.add(new RuleRow(
                 "BR675_1335",
@@ -53,9 +53,9 @@ public class RuleIrSmokeTest {
                 "DMS_SMOKE_BR675_UNK_R29",
                 "BR675"
         ));
-//        rows.add(sampleSpSpDifferentGi());
-//        rows.add(sampleAiDocAd());
-//        addRows(rows);
+        rows.add(sampleSpSpDifferentGi());
+        rows.add(sampleAiDocAd());
+        addRows(rows);
 // ======================================================
 // Consolidated BR675 smoke rows
 // - Exact duplicates removed (your IDs win)

@@ -106,12 +106,18 @@ public class RuleIrGenerator {
 
                 } else {
                     // If IN/NOT_IN has a single value, collapse to ==/!= for cleaner DSL keys/wording
-                    if ("IN".equals(op) && pc.getValues().size() == 1) {
-                        op = "==";
+                    if ("IN".equals(op) || "NOT_IN".equals(op)) {
+                        child.getFieldConstraints().put(
+                                pc.getFieldName(),
+                                new Constraint(op, pc.getValues()) // keep as List always
+                        );
+                    } else {
+                        child.getFieldConstraints().put(
+                                pc.getFieldName(),
+                                new Constraint(op, pc.getValues().get(0))
+                        );
                     }
-                    if ("NOT_IN".equals(op) && pc.getValues().size() == 1) {
-                        op = "!=";
-                    }
+
 
                     if ("IN".equals(op) || "NOT_IN".equals(op)) {
                         child.getFieldConstraints().put(
@@ -211,8 +217,8 @@ public class RuleIrGenerator {
         if (op == null) return false;
         return switch (op.trim().toUpperCase()) {
             case "IS_PROVIDED", "IS_NOT_PROVIDED",
-                 "IS_PRESENT", "IS_NOT_PRESENT",
-                 "EXISTS", "NOT_EXISTS" -> true; // include what you actually use
+                 "IS_PRESENT", "IS_NOT_PRESENT" -> true;
+
             default -> false;
         };
     }
