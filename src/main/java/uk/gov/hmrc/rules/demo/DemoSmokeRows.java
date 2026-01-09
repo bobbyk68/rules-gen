@@ -16,6 +16,8 @@ public final class DemoSmokeRows {
         // If not, keep legacy creation and let DemoSmokeTestResolver add it.
 
         List<RuleRow> rows = new ArrayList<>();
+
+
         rows.add(new RuleRow(
                 "BR675_1125",
                 List.of("all"),

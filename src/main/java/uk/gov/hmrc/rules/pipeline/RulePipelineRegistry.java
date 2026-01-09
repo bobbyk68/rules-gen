@@ -11,8 +11,8 @@ public final class RulePipelineRegistry {
     private final Map<RuleSet, RulePipeline> byRuleSet = new EnumMap<>(RuleSet.class);
 
     public RulePipelineRegistry() {
-        byRuleSet.put(RuleSet.BR_455, new Br455Pipeline());
-        byRuleSet.put(RuleSet.BR_675, new Br675Pipeline());
+        byRuleSet.put(RuleSet.BR455, new Br455Pipeline());
+        byRuleSet.put(RuleSet.BR675, new Br675Pipeline());
     }
 
     public RulePipeline get(RuleSet ruleSet) {

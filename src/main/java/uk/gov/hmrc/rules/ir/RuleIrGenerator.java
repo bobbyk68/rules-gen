@@ -15,7 +15,7 @@ public class RuleIrGenerator {
         List<TopologyBuilder.ParentGroup> groups =
             topologyBuilder.build(parsedConditions);
 
-        RuleModel model = new RuleModel();
+        RuleModel model = new RuleModel(row, parsedConditions);
         model.setId(row.id());
 
         int parentIndex = 1;

@@ -22,8 +22,6 @@ public class RuleIrSmokeTest {
     public static void main(String[] args) {
 
 
-
-
 // ======================================================
 // Consolidated BR675 smoke rows
 // - Exact duplicates removed (your IDs win)
@@ -33,7 +31,7 @@ public class RuleIrSmokeTest {
         RulePipelineRegistry registry = new RulePipelineRegistry();
 
         // 1) your existing rows creation (keep it as-is)
-        List<RuleRow> rows = DemoSmokeRows.create();
+        List<RuleRow> rows = Demo455SmokeRows.create();
 
         for (RuleRow row : rows) {
             System.out.println("==================================================");

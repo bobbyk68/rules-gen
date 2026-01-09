@@ -25,12 +25,12 @@ public class DslEmitter {
 
         StringBuilder sb = new StringBuilder();
 
-        sb.append("[condition]\n");
+        sb.append("[when]\n");
         for (DslEntry e : emission.whenEntries()) {
             sb.append(e.getLhs()).append(" = ").append(e.getRhs()).append("\n");
         }
 
-        sb.append("\n[consequence]\n");
+        sb.append("\n[then]\n");
         for (DslEntry e : emission.thenEntries()) {
             sb.append(e.getLhs()).append(" = ").append(e.getRhs()).append("\n");
         }
