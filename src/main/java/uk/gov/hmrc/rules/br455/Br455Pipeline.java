@@ -1,6 +1,6 @@
 package uk.gov.hmrc.rules.br455;
 
-import uk.gov.hmrc.rules.RuleRow;
+import uk.gov.hmrc.rules.dsl.Br455DslEmitter;
 import uk.gov.hmrc.rules.dsl.DslEmitter;
 import uk.gov.hmrc.rules.dsl.RuleSetDslEmitter;
 import uk.gov.hmrc.rules.dslr.DslrEmitter;
@@ -18,7 +18,7 @@ public final class Br455Pipeline implements RulePipeline {
     public Br455Pipeline() {
         this(
                 new DslEmitter(List.of(
-                        (RuleSetDslEmitter) new uk.gov.hmrc.rules.dsl.Br455RuleSetDslEmitter()
+                        (RuleSetDslEmitter) new Br455DslEmitter()
                 )),
                 new DslrEmitter(List.of(
                         (RuleSetDslrEmitter) new uk.gov.hmrc.rules.dslr.Br455RuleSetDslrEmitter()

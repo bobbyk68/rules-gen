@@ -1,13 +1,13 @@
 package uk.gov.hmrc.rules.dsl;
 
-import java.util.ArrayList;
-import java.util.List;
 import uk.gov.hmrc.rules.br455.Br455IfParser;
 import uk.gov.hmrc.rules.br455.Br455ListRule;
 import uk.gov.hmrc.rules.br455.Br455RootFactRegistry;
 import uk.gov.hmrc.rules.ir.RuleModel;
 
-public final class Br455RuleSetDslEmitter implements RuleSetDslEmitter {
+import java.util.List;
+
+public final class Br455DslEmitter implements RuleSetDslEmitter {
 
     private final Br455IfParser parser = new Br455IfParser();
     private final Br455RootFactRegistry registry = new Br455RootFactRegistry();
@@ -21,8 +21,6 @@ public final class Br455RuleSetDslEmitter implements RuleSetDslEmitter {
     @Override
     public List<DslEntry> emitWhen(RuleModel model) {
 
-        // --------- CHANGE HERE ONLY IF YOUR API DIFFERS ----------
-        // If your RuleModel doesn't expose the RuleRow, change these 2 lines.
         String ifCondition = model.ruleRow().ifCondition();
         // ---------------------------------------------------------
 
