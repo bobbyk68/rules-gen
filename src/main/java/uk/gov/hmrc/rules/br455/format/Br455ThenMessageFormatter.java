@@ -8,7 +8,7 @@ public final class Br455ThenMessageFormatter {
         // utility
     }
 
-    public static String friendlyPathNoDots(String fullFieldPath) {
+    public static String friendlyPathNoDotsx(String fullFieldPath) {
         // fullFieldPath examples:
         //  - "Declaration.invoiceAmount.unitType.code"
         //  - "ConsignmentShipment.BorderTransportMeans.mode.code"
@@ -21,18 +21,40 @@ public final class Br455ThenMessageFormatter {
         return stripped.replace('.', ' ').trim();
     }
 
-    public static String buildWhenDslLhs(
-            String fieldPath,
-            Br455ListRule.Mode mode
-    ) {
-        String path = friendlyPathNoDots(fieldPath);
+    public static String friendlyPathNoDots(String fieldPath) {
+        if (fieldPath == null) return "";
+        return fieldPath.trim().replace('.', ' ');
+    }
+
+
+    // =========================
+// NEW METHOD: buildWhenDslLhs
+// =========================
+    public static String buildWhenDslLhs(String fieldPath, Br455ListRule.Mode mode) {
+
+        // Reuse your existing friendlyPathNoDots logic if you have it,
+        // otherwise do the simple dot -> space conversion.
+        String pathNoDots = friendlyPathNoDots(fieldPath);
 
         String phrase = (mode == Br455ListRule.Mode.MUST_EXIST_IN_LIST)
                 ? "must exist in list {value}"
                 : "must not exist in list {value}";
 
-        return path + " " + phrase;
+        return "- " + pathNoDots + " " + phrase;
     }
+
+//    public static String buildWhenDslLhs(
+//            String fieldPath,
+//            Br455ListRule.Mode mode
+//    ) {
+//        String path = friendlyPathNoDots(fieldPath);
+//
+//        String phrase = (mode == Br455ListRule.Mode.MUST_EXIST_IN_LIST)
+//                ? "must exist in list {value}"
+//                : "must not exist in list {value}";
+//
+//        return path + " " + phrase;
+//    }
 
     public static String existPhrase(Br455ListRule.Mode mode) {
         return (mode == Br455ListRule.Mode.MUST_EXIST_IN_LIST)

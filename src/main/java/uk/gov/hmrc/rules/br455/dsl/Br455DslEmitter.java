@@ -49,10 +49,12 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         String rhs = bind + "\n" + violation;
 
         // DSL LHS (human key). For now we keep it concrete (demo)
-        String lhs = "- " + rule.fieldPath() + " " +
+        String lhs = "- " + uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter
+                .friendlyPathNoDots(rule.fieldPath()) + " " +
                 (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST
                         ? "must exist in list {value}"
                         : "must not exist in list {value}");
+
 
         DslKey key = new DslKey(
                 "BR455",
