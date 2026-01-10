@@ -3,6 +3,7 @@ package uk.gov.hmrc.rules.dsl;
 import uk.gov.hmrc.rules.br455.Br455IfParser;
 import uk.gov.hmrc.rules.br455.Br455ListRule;
 import uk.gov.hmrc.rules.br455.Br455RootFactRegistry;
+import uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter;
 import uk.gov.hmrc.rules.ir.RuleModel;
 
 import java.util.List;
@@ -60,33 +61,47 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         return List.of(new DslEntry(key, "condition", lhs, rhs));
     }
 
-    @Override
-    public List<DslEntry> emitThen(RuleModel model) {
+    // =========================
+// CHANGED METHOD: emitThen
+// =========================
+    public List<DslEntry> emitThenold(RuleModel model) {
 
-        // --------- CHANGE HERE ONLY IF YOUR API DIFFERS ----------
-        String id = model.ruleRow().id();
         String ifCondition = model.ruleRow().ifCondition();
-        // ---------------------------------------------------------
 
         Br455ListRule rule = parser.parse(ifCondition);
+        String sentence = Br455ThenMessageFormatter.buildThenSentence(
+                "BR455",
+                rule.fieldPath(),
+                rule.mode(),
+                rule.listName()
+        );
 
-        // For demo: print something deterministic. We’ll revisit wording later.
-        String fieldTail = stripRoot(rule.fieldPath());
-        String list = rule.listName();
+        String fieldPath = rule.fieldPath();              // e.g. Declaration.invoiceAmount.unitType.code
+        String listName = rule.listName();                // e.g. CurrencyTypes
 
-        String message = (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST)
-                ? fieldTail + " does not exist in list " + list
-                : fieldTail + " does exist in list " + list;
+        String fieldTail = stripRoot(fieldPath);          // e.g. invoiceAmount.unitType.code
+        String fieldNoDots = fieldTail.replace('.', ' '); // e.g. invoiceAmount unitType code
 
-        String lhs = "Then emit " + id + " {message}";
+        boolean mustExist = (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST);
+
+        String message = "Emit BR455 validation error for "
+                + fieldNoDots
+                + (mustExist ? " must exist in " : " must not exist in ")
+                + listName;
+
+        // IMPORTANT: no rule id in the DSL [then] key
+        String lhs = "Then emit BR455 validation error for " +
+                Br455ThenMessageFormatter.friendlyPathNoDots(rule.fieldPath()) + " " +
+                Br455ThenMessageFormatter.existPhrase(rule.mode()) + " " +
+                rule.listName();
         String rhs = "System.out.println(\"" + escape(message) + "\");";
 
         DslKey key = new DslKey(
                 "BR455",
                 "consequence",
                 "SINGLE",
-                rootKey(rule.fieldPath()),
-                rootKey(rule.fieldPath()),
+                rootKey(fieldPath),
+                rootKey(fieldPath),
                 fieldTail,
                 "PRINT"
         );
@@ -94,13 +109,43 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         return List.of(new DslEntry(key, "consequence", lhs, rhs));
     }
 
+    @Override
+    public List<DslEntry> emitThen(RuleModel model) {
 
-    private String shortFieldPath(String fullPath) {
-        if (fullPath == null) return "";
-        int dot = fullPath.indexOf('.');
-        return (dot < 0) ? fullPath : fullPath.substring(dot + 1);
+        // =========================
+        // CHANGED METHOD: emitThen()
+        // =========================
+        String ifCondition = model.ruleRow().ifCondition();
+        Br455ListRule rule = parser.parse(ifCondition);
+
+        String lhs = Br455ThenMessageFormatter.buildThenDslLhs(
+                "BR455",
+                rule.fieldPath(),
+                rule.mode(),
+                rule.listName()
+        );
+
+        String msg = Br455ThenMessageFormatter.buildThenMessage(
+                "BR455",
+                rule.fieldPath(),
+                rule.mode(),
+                rule.listName()
+        );
+
+        String rhs = "System.out.println(\"" + escape(msg) + "\");";
+
+        DslKey key = new DslKey(
+                "BR455",
+                "then",
+                "SINGLE",
+                rootKey(rule.fieldPath()),
+                rootKey(rule.fieldPath()),
+                stripRoot(rule.fieldPath()),
+                "PRINT"
+        );
+
+        return List.of(new DslEntry(key, "then", lhs, rhs));
     }
-
 
     @Override
     public DslEmission emit(RuleModel model) {

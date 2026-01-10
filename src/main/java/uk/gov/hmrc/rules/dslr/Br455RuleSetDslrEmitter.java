@@ -3,6 +3,7 @@ package uk.gov.hmrc.rules.dslr;
 import java.util.List;
 import uk.gov.hmrc.rules.br455.Br455IfParser;
 import uk.gov.hmrc.rules.br455.Br455ListRule;
+import uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter;
 import uk.gov.hmrc.rules.emitter.Br455DslrProfile;
 import uk.gov.hmrc.rules.emitter.DslrWhenBlock;
 import uk.gov.hmrc.rules.ir.RuleModel;
@@ -52,18 +53,25 @@ public final class Br455RuleSetDslrEmitter implements RuleSetDslrEmitter {
         return sb.toString();
     }
 
-
-
+    // ===============================
+// CHANGED METHOD: emitThenPrintln
+// ===============================
     private String emitThenPrintln(Br455ListRule rule) {
-        String field = rule.fieldPath(); // invoiceAmount.unitType.code
-        String list = rule.listName();
 
-        String msg = switch (rule.mode()) {
-            case MUST_EXIST_IN_LIST -> field + " does not exist in list " + list;
-            case MUST_NOT_EXIST_IN_LIST -> field + " does exist in list " + list;
-        };
+        String msg = Br455ThenMessageFormatter.buildThenMessage(
+                "BR455",
+                rule.fieldPath(),
+                rule.mode(),
+                rule.listName()
+        );
 
-        return "Emit 455 (\"" + msg + "\");";
+        return "Emit 455 (\"" + escape(msg) + "\");";
     }
+
+    private static String escape(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
 
 }

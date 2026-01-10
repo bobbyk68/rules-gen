@@ -1,4 +1,4 @@
-package uk.gov.hmrc.rules.br455;
+package uk.gov.hmrc.rules.br455.format;
 
 public final class Br455MessageFormatter {
 
