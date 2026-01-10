@@ -1,9 +1,13 @@
-package uk.gov.hmrc.rules.dsl;
+package uk.gov.hmrc.rules.br455.dsl;
 
-import uk.gov.hmrc.rules.br455.Br455IfParser;
+import uk.gov.hmrc.rules.br455.parsing.Br455IfParser;
 import uk.gov.hmrc.rules.br455.Br455ListRule;
-import uk.gov.hmrc.rules.br455.Br455RootFactRegistry;
+import uk.gov.hmrc.rules.br455.registry.Br455RootFactRegistry;
 import uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter;
+import uk.gov.hmrc.rules.dsl.DslEmission;
+import uk.gov.hmrc.rules.dsl.DslEntry;
+import uk.gov.hmrc.rules.dsl.DslKey;
+import uk.gov.hmrc.rules.dsl.RuleSetDslEmitter;
 import uk.gov.hmrc.rules.ir.RuleModel;
 
 import java.util.List;
@@ -38,15 +42,17 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         // MUST_NOT   -> violation is "RefDataEntry(listName == X, value == $v)"
         String listName = rule.listName();
         String violation = (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST)
-                ? "not RefDataEntry( listName == \"" + escape(listName) + "\", value == $v )"
-                : "RefDataEntry( listName == \"" + escape(listName) + "\", value == $v )";
+                ? "not RefDataEntry( listName == \"{value}\", value == $v )"
+                : "RefDataEntry( listName == \"{value}\", value == $v )";
+
 
         String rhs = bind + "\n" + violation;
 
         // DSL LHS (human key). For now we keep it concrete (demo)
-        String lhs = "- " + stripRoot(rule.fieldPath()) + " " +
-                (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST ? "must exist in list " : "must not exist in list ")
-                + listName;
+        String lhs = "- " + rule.fieldPath() + " " +
+                (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST
+                        ? "must exist in list {value}"
+                        : "must not exist in list {value}");
 
         DslKey key = new DslKey(
                 "BR455",
@@ -61,53 +67,7 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         return List.of(new DslEntry(key, "condition", lhs, rhs));
     }
 
-    // =========================
-// CHANGED METHOD: emitThen
-// =========================
-    public List<DslEntry> emitThenold(RuleModel model) {
 
-        String ifCondition = model.ruleRow().ifCondition();
-
-        Br455ListRule rule = parser.parse(ifCondition);
-        String sentence = Br455ThenMessageFormatter.buildThenSentence(
-                "BR455",
-                rule.fieldPath(),
-                rule.mode(),
-                rule.listName()
-        );
-
-        String fieldPath = rule.fieldPath();              // e.g. Declaration.invoiceAmount.unitType.code
-        String listName = rule.listName();                // e.g. CurrencyTypes
-
-        String fieldTail = stripRoot(fieldPath);          // e.g. invoiceAmount.unitType.code
-        String fieldNoDots = fieldTail.replace('.', ' '); // e.g. invoiceAmount unitType code
-
-        boolean mustExist = (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST);
-
-        String message = "Emit BR455 validation error for "
-                + fieldNoDots
-                + (mustExist ? " must exist in " : " must not exist in ")
-                + listName;
-
-        // IMPORTANT: no rule id in the DSL [then] key
-        String lhs = "Then emit BR455 validation error for " +
-                Br455ThenMessageFormatter.friendlyPathNoDots(rule.fieldPath()) + " " +
-                Br455ThenMessageFormatter.existPhrase(rule.mode()) + " " +
-                rule.listName();
-        String rhs = "System.out.println(\"" + escape(message) + "\");";
-
-        DslKey key = new DslKey(
-                "BR455",
-                "consequence",
-                "SINGLE",
-                rootKey(fieldPath),
-                rootKey(fieldPath),
-                fieldTail,
-                "PRINT"
-        );
-
-        return List.of(new DslEntry(key, "consequence", lhs, rhs));
-    }
 
     @Override
     public List<DslEntry> emitThen(RuleModel model) {

@@ -1,4 +1,6 @@
-package uk.gov.hmrc.rules.br455;
+package uk.gov.hmrc.rules.br455.parsing;
+
+import uk.gov.hmrc.rules.br455.Br455ListRule;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,6 +15,12 @@ public final class Br455IfParser {
 
     private static final Pattern LIST_WORD =
             Pattern.compile("(?i)\\blist\\s+([A-Za-z0-9_]+)\\b");
+
+    public java.util.List<uk.gov.hmrc.rules.parsing.ParsedCondition> parseParsedConditions(String ifText) {
+        uk.gov.hmrc.rules.br455.Br455ListRule rule = parse(ifText); // your existing method
+        return java.util.List.of(rule.toParsedCondition());
+    }
+
 
     public Br455ListRule parse(String ifCondition) {
         String text = safe(ifCondition);

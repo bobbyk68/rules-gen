@@ -1,9 +1,10 @@
-package uk.gov.hmrc.rules.emitter;
+package uk.gov.hmrc.rules.br675.dslr;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import uk.gov.hmrc.rules.dslr.DslrWhenBlock;
 import uk.gov.hmrc.rules.parsing.ConditionRole;
 import uk.gov.hmrc.rules.parsing.ParsedCondition;
 

@@ -1,4 +1,7 @@
-package uk.gov.hmrc.rules.dsl;
+package uk.gov.hmrc.rules.br675.dsl;
+
+import uk.gov.hmrc.rules.br675.registry.Br675FactDslRegistry;
+import uk.gov.hmrc.rules.dsl.FactDslRegistry;
 
 public class Br675WhenRhsRenderer {
 

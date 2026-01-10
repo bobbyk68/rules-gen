@@ -2,8 +2,8 @@ package uk.gov.hmrc.rules.pipeline;
 
 import java.util.EnumMap;
 import java.util.Map;
-import uk.gov.hmrc.rules.br455.Br455Pipeline;
-import uk.gov.hmrc.rules.br675.Br675Pipeline;
+import uk.gov.hmrc.rules.br455.pipeline.Br455Pipeline;
+import uk.gov.hmrc.rules.br675.pipeline.Br675Pipeline;
 import uk.gov.hmrc.rules.ruleset.RuleSet;
 
 public final class RulePipelineRegistry {

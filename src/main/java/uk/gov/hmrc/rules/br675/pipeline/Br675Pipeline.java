@@ -1,8 +1,7 @@
-package uk.gov.hmrc.rules.br675;
+package uk.gov.hmrc.rules.br675.pipeline;
 
 import uk.gov.hmrc.rules.RuleRow;
-import uk.gov.hmrc.rules.dsl.Br675DslEmitter;
-import uk.gov.hmrc.rules.dsl.DslEmission;
+import uk.gov.hmrc.rules.br675.dsl.Br675DslEmitter;
 import uk.gov.hmrc.rules.dsl.DslEmitter;
 import uk.gov.hmrc.rules.ir.RuleIrGenerator;
 import uk.gov.hmrc.rules.ir.RuleModel;

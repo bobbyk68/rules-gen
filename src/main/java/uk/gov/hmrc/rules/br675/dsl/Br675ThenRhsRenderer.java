@@ -1,6 +1,4 @@
-package uk.gov.hmrc.rules.dsl;
-
-import uk.gov.hmrc.rules.ir.EmitErrorActionNode;
+package uk.gov.hmrc.rules.br675.dsl;
 
 public class Br675ThenRhsRenderer {
 

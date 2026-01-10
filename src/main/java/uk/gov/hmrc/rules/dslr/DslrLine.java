@@ -1,4 +1,4 @@
-package uk.gov.hmrc.rules.emitter;
+package uk.gov.hmrc.rules.dslr;
 
 public class DslrLine {
     private final String text;

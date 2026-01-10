@@ -1,6 +1,9 @@
-package uk.gov.hmrc.rules.br455;
+package uk.gov.hmrc.rules.br455.pipeline;
 
 import uk.gov.hmrc.rules.RuleRow;
+import uk.gov.hmrc.rules.br455.parsing.Br455IfParser;
+import uk.gov.hmrc.rules.br455.Br455ListRule;
+import uk.gov.hmrc.rules.br455.Br455ThenMessage;
 
 public final class Br455PipelineRunner {
 

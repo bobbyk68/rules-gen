@@ -1,4 +1,4 @@
-package uk.gov.hmrc.rules.emitter;
+package uk.gov.hmrc.rules.br455.dslr;
 
 public final class Br455DslrPhrasebook {
 

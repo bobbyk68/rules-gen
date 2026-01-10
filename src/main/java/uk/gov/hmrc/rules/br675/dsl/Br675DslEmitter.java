@@ -1,10 +1,7 @@
-package uk.gov.hmrc.rules.dsl;
+package uk.gov.hmrc.rules.br675.dsl;
 
+import uk.gov.hmrc.rules.dsl.*;
 import uk.gov.hmrc.rules.ir.*;
-
-import java.util.HashSet;
-import java.util.Set;
-
 
 
 public class Br675DslEmitter implements RuleSetDslEmitter {

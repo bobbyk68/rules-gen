@@ -1,4 +1,4 @@
-package uk.gov.hmrc.rules.emitter;
+package uk.gov.hmrc.rules.dslr;
 
 import java.util.ArrayList;
 import java.util.List;

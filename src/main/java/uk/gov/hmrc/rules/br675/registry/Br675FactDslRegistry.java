@@ -1,4 +1,6 @@
-package uk.gov.hmrc.rules.dsl;
+package uk.gov.hmrc.rules.br675.registry;
+
+import uk.gov.hmrc.rules.dsl.FactDslRegistry;
 
 public class Br675FactDslRegistry implements FactDslRegistry {
 

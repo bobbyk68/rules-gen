@@ -1,11 +1,11 @@
-package uk.gov.hmrc.rules.dslr;
+package uk.gov.hmrc.rules.br455.dslr;
 
 import java.util.List;
-import uk.gov.hmrc.rules.br455.Br455IfParser;
+import uk.gov.hmrc.rules.br455.parsing.Br455IfParser;
 import uk.gov.hmrc.rules.br455.Br455ListRule;
 import uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter;
-import uk.gov.hmrc.rules.emitter.Br455DslrProfile;
-import uk.gov.hmrc.rules.emitter.DslrWhenBlock;
+import uk.gov.hmrc.rules.dslr.RuleSetDslrEmitter;
+import uk.gov.hmrc.rules.dslr.DslrWhenBlock;
 import uk.gov.hmrc.rules.ir.RuleModel;
 import uk.gov.hmrc.rules.RuleRow;
 
@@ -46,9 +46,8 @@ public final class Br455RuleSetDslrEmitter implements RuleSetDslrEmitter {
         }
 
         sb.append("then\n");
-        sb.append("    ").append(emitThenPrintln(rule)).append("\n");
+        sb.append("    ").append(emitThenDslLine(rule)).append("\n");
         sb.append("end\n");
-
 
         return sb.toString();
     }
@@ -73,5 +72,14 @@ public final class Br455RuleSetDslrEmitter implements RuleSetDslrEmitter {
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
+
+    private String emitThenDslLine(Br455ListRule rule) {
+        return Br455ThenMessageFormatter.buildThenDslLhs(
+                "BR455",
+                rule.fieldPath(),
+                rule.mode(),
+                rule.listName()
+        );
+    }
 
 }

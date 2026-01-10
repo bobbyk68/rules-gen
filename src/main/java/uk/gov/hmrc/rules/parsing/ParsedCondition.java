@@ -2,8 +2,6 @@ package uk.gov.hmrc.rules.parsing;
 
 import java.util.List;
 public class ParsedCondition {
-
-
     public enum Quantifier { AT_LEAST_ONE, ALL }
     Quantifier quantifier;     // <-- add this (or equivalent)
     private final String entityType;
