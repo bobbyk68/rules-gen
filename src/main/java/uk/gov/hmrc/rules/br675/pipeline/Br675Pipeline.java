@@ -21,15 +21,15 @@ public final class Br675Pipeline implements RulePipeline {
     public void process(RuleRow row) {
         System.out.println("=== BR675 PIPELINE ===");
         System.out.println("ruleId=" + row.id());
+        System.out.println("if=" + row.ifCondition());
+        System.out.println("then=" + row.thenCondition());
+        System.out.println();
 
-        // TODO: call your existing 675 IR/DSL generator here
-        // e.g. irBuilder.build(row) -> dslGenerator.generate(ir)
         ParsedCondition ifCond   = parser.parseIf(row.ifCondition());
-
         ParsedCondition thenCond = parser.parseThen(row.thenCondition());
         System.out.println((thenCond.toString()));
 
-        RuleModel model = irGen.generate(row, java.util.List.of(ifCond, thenCond));
+        RuleModel model = irGen.generate(row, List.of(ifCond, thenCond));
         String ruleSet = extractRuleSet(row.id());           // BR675
         DslEmitter dslEmitter = new DslEmitter(List.of(new Br675DslEmitter()));
         dslEmitter.emit(ruleSet, model);
