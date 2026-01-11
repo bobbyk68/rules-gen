@@ -7,14 +7,10 @@ import uk.gov.hmrc.rules.ir.EmitErrorActionNode;
 import uk.gov.hmrc.rules.ir.ConditionNode;
 import uk.gov.hmrc.rules.ir.FactConditionNode;
 import uk.gov.hmrc.rules.ir.ParentConditionNode;
-import uk.gov.hmrc.rules.ir.RuleIrGenerator;
 import uk.gov.hmrc.rules.ir.RuleModel;
-import uk.gov.hmrc.rules.parsing.ConditionParser;
 import uk.gov.hmrc.rules.parsing.ParsedCondition;
-import uk.gov.hmrc.rules.parsing.TextConditionParser;
 import uk.gov.hmrc.rules.pipeline.RulePipelineRegistry;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class RuleIrSmokeTest {
@@ -468,8 +464,8 @@ public class RuleIrSmokeTest {
     private static void debugPrintDsl(DslEmission emission) {
         System.out.println("DSL [when] entries:");
         for (DslEntry e : emission.whenEntries()) {
-            System.out.println("  " + e.getLhs());
-            String rhs = e.getRhs();
+            System.out.println("  " + e.lhs());
+            String rhs = e.rhs();
             String indented = rhs.replace("\n", "\n      ");
             System.out.println("    = " + indented);
 
@@ -477,8 +473,8 @@ public class RuleIrSmokeTest {
 
         System.out.println("DSL [then] entries:");
         for (DslEntry e : emission.thenEntries()) {
-            System.out.println("  " + e.getLhs());
-            System.out.println("    = " + e.getRhs());
+            System.out.println("  " + e.lhs());
+            System.out.println("    = " + e.rhs());
         }
     }
 

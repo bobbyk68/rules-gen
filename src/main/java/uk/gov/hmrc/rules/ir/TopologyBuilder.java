@@ -2,38 +2,12 @@ package uk.gov.hmrc.rules.ir;
 
 import uk.gov.hmrc.rules.parsing.ParsedCondition;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public class TopologyBuilder {
 
-    public static class ParentGroup {
+    public record ParentGroup(String anchorKey, String parentEntityType, List<ParsedCondition> children) {
 
-        private final String anchorKey;
-        private final String parentEntityType;
-        private final java.util.List<uk.gov.hmrc.rules.parsing.ParsedCondition> children;
-
-        public ParentGroup(String anchorKey,
-                           String parentEntityType,
-                           java.util.List<uk.gov.hmrc.rules.parsing.ParsedCondition> children) {
-            this.anchorKey = anchorKey;
-            this.parentEntityType = parentEntityType;
-            this.children = children;
-        }
-
-        public String getAnchorKey() {
-            return anchorKey;
-        }
-
-        public String getParentEntityType() {
-            return parentEntityType;
-        }
-
-        public java.util.List<uk.gov.hmrc.rules.parsing.ParsedCondition> getChildren() {
-            return children;
-        }
     }
 
     // ==========================================================

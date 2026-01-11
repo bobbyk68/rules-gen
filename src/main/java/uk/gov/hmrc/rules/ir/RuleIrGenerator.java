@@ -26,14 +26,14 @@ public class RuleIrGenerator {
 
             ParentConditionNode parentNode = new ParentConditionNode();
             parentNode.setAlias(parentAlias);
-            parentNode.setFactType(group.getParentEntityType());
+            parentNode.setFactType(group.parentEntityType());
             parentNode.setRole(ConditionRole.OTHER);
             parentNode.setFieldTypeLabel(null);
 
             addHeaderConstraints(parentNode, row);
             model.getConditions().add(parentNode);
 
-            for (ParsedCondition pc : group.getChildren()) {
+            for (ParsedCondition pc : group.children()) {
                 FactConditionNode child = new FactConditionNode();
                 child.setAlias("$c" + childIndex++);
                 child.setFactType(pc.getEntityType());

@@ -137,7 +137,7 @@ public class Br675DslEmitter implements RuleSetDslEmitter {
 
         System.out.println("WHEN entries count=" + when.size());
         for (DslEntry e : when) {
-            System.out.println("WHEN LHS=" + e.getLhs());
+            System.out.println("WHEN LHS=" + e.lhs());
         }
 
 

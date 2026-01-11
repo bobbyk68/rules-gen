@@ -38,10 +38,9 @@ public final class Br675DslrPhrasebook {
 
         // common patterns where label is the “field” already
         // invoiceAmount -> "invoice amount" should remain as-is
-        if (fieldTypeLabel.toLowerCase(Locale.ROOT).contains(toWords(fn))) return true;
+        return fieldTypeLabel.toLowerCase(Locale.ROOT).contains(toWords(fn));
 
         // if fieldName is literally "code" or "typeCode", label usually needs it
-        return false;
     }
 
     // Dash line rendering

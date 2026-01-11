@@ -27,12 +27,12 @@ public class DslEmitter {
 
         sb.append("[when]\n");
         for (DslEntry e : emission.whenEntries()) {
-            sb.append(e.getLhs()).append(" = ").append(e.getRhs()).append("\n");
+            sb.append(e.lhs()).append(" = ").append(e.rhs()).append("\n");
         }
 
         sb.append("\n[then]\n");
         for (DslEntry e : emission.thenEntries()) {
-            sb.append(e.getLhs()).append(" = ").append(e.getRhs()).append("\n");
+            sb.append(e.lhs()).append(" = ").append(e.rhs()).append("\n");
         }
 
         return sb.toString();

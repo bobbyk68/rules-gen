@@ -1,15 +1,8 @@
 package uk.gov.hmrc.rules.br455.pipeline;
 
-import uk.gov.hmrc.rules.br455.dsl.Br455DslEmitter;
-import uk.gov.hmrc.rules.br455.dslr.Br455RuleSetDslrEmitter;
-import uk.gov.hmrc.rules.dsl.DslEmitter;
-import uk.gov.hmrc.rules.dsl.RuleSetDslEmitter;
-import uk.gov.hmrc.rules.dslr.DslrEmitter;
-import uk.gov.hmrc.rules.dslr.RuleSetDslrEmitter;
 import uk.gov.hmrc.rules.pipeline.RulePipeline;
 
 import java.util.List;
-import java.util.Objects;
 public final class Br455Pipeline implements RulePipeline {
 
     private final uk.gov.hmrc.rules.br455.parsing.Br455IfParser ifParser;
@@ -20,10 +13,10 @@ public final class Br455Pipeline implements RulePipeline {
         this(
                 new uk.gov.hmrc.rules.br455.parsing.Br455IfParser(),
                 new uk.gov.hmrc.rules.dsl.DslEmitter(List.of(
-                        (uk.gov.hmrc.rules.dsl.RuleSetDslEmitter) new uk.gov.hmrc.rules.br455.dsl.Br455DslEmitter()
+                        new uk.gov.hmrc.rules.br455.dsl.Br455DslEmitter()
                 )),
                 new uk.gov.hmrc.rules.dslr.DslrEmitter(List.of(
-                        (uk.gov.hmrc.rules.dslr.RuleSetDslrEmitter) new uk.gov.hmrc.rules.br455.dslr.Br455RuleSetDslrEmitter()
+                        new uk.gov.hmrc.rules.br455.dslr.Br455RuleSetDslrEmitter()
                 ))
         );
     }
@@ -47,10 +40,8 @@ public final class Br455Pipeline implements RulePipeline {
         System.out.println("then=" + row.thenCondition());
         System.out.println();
 
-
         java.util.List<uk.gov.hmrc.rules.parsing.ParsedCondition> parsed =
                 ifParser.parseParsedConditions(row.ifCondition());
-
 
         // 2) Build RuleModel with provenance
         uk.gov.hmrc.rules.ir.RuleModel model =

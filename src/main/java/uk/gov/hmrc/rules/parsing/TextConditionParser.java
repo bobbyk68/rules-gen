@@ -1,9 +1,5 @@
 package uk.gov.hmrc.rules.parsing;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Text-based parser that splits:
  *   FRONT   (quantifier)
@@ -137,12 +133,12 @@ public class TextConditionParser implements ConditionParser {
 
 
         return new ParsedCondition(
-                field.getEntityType(),
-                field.getParentAnchorKey(),
-                field.getFieldName(),
+                field.entityType(),
+                field.parentAnchorKey(),
+                field.fieldName(),
                 operatorCode,
                 values,
-                field.getFieldTypeLabel(),
+                field.fieldTypeLabel(),
                 role,
                 quantifier // <-- add this (or equivalent)
         );
