@@ -35,16 +35,21 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
 
         String ifCondition = model.ruleRow().ifCondition();
         Br455ListRule rule = parser.parse(ifCondition);
+
         Br455RootFactRegistry.Resolved r = registry.resolve(rule.fieldPath());
+
         String fieldVar = fieldVar(r.propertyPath());
 
         String bind = r.alias() + " : " + r.factClassSimpleName()
                 + "( " + fieldVar + " : " + r.propertyPath() + " )";
 
-        String violation = (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST)
-                ? "not RefDataEntry( listName == \"{value}\", value == " + fieldVar + " )"
-                : "RefDataEntry( listName == \"{value}\", value == " + fieldVar + " )";
+        // Option A: no explosion; one fact per list:
+        // RefDataSetFact(name == "<list>", values contains <code>)
+        String listMembership = "RefDataSetFact( name == \"{value}\", values contains " + fieldVar + " )";
 
+        String violation = (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST)
+                ? "not " + listMembership
+                : listMembership;
 
         String rhs = bind + "\n" + violation;
 
@@ -67,7 +72,6 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
 
         return List.of(new DslEntry(key, "condition", lhs, rhs));
     }
-
 
 
     // =========================
