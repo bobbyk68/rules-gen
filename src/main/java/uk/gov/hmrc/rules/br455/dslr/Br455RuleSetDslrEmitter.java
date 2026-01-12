@@ -1,13 +1,14 @@
 package uk.gov.hmrc.rules.br455.dslr;
 
-import java.util.List;
-import uk.gov.hmrc.rules.br455.parsing.Br455IfParser;
+import uk.gov.hmrc.rules.RuleRow;
 import uk.gov.hmrc.rules.br455.Br455ListRule;
 import uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter;
-import uk.gov.hmrc.rules.dslr.RuleSetDslrEmitter;
+import uk.gov.hmrc.rules.br455.parsing.Br455IfParser;
 import uk.gov.hmrc.rules.dslr.DslrWhenBlock;
+import uk.gov.hmrc.rules.dslr.RuleSetDslrEmitter;
 import uk.gov.hmrc.rules.ir.RuleModel;
-import uk.gov.hmrc.rules.RuleRow;
+
+import java.util.List;
 
 public final class Br455RuleSetDslrEmitter implements RuleSetDslrEmitter {
 
@@ -57,14 +58,13 @@ public final class Br455RuleSetDslrEmitter implements RuleSetDslrEmitter {
 // ===============================
     private String emitThenPrintln(Br455ListRule rule) {
 
-        String msg = Br455ThenMessageFormatter.buildThenMessage(
+        // DSLR should mirror the DSL "then" LHS wording (not the runtime action)
+        return Br455ThenMessageFormatter.buildThenDslLhs(
                 "BR455",
                 rule.fieldPath(),
                 rule.mode(),
                 rule.listName()
         );
-
-        return "Emit 455 (\"" + escape(msg) + "\");";
     }
 
     private static String escape(String s) {

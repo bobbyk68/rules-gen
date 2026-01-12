@@ -1,9 +1,11 @@
 package uk.gov.hmrc.rules.br455.dsl;
 
-import uk.gov.hmrc.rules.br455.parsing.Br455IfParser;
 import uk.gov.hmrc.rules.br455.Br455ListRule;
-import uk.gov.hmrc.rules.br455.registry.Br455RootFactRegistry;
 import uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter;
+import uk.gov.hmrc.rules.br455.lookup.Br455LeafResolver;
+import uk.gov.hmrc.rules.br455.parsing.Br455IfParser;
+import uk.gov.hmrc.rules.br455.registry.Br455RootFactRegistry;
+import uk.gov.hmrc.rules.br455.then.Br455ThenRhsBuilder;
 import uk.gov.hmrc.rules.dsl.DslEmission;
 import uk.gov.hmrc.rules.dsl.DslEntry;
 import uk.gov.hmrc.rules.dsl.DslKey;
@@ -23,27 +25,25 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         return ruleSet.trim().equalsIgnoreCase("BR455");
     }
 
+    private static String fieldVar(String propertyPath) {
+        String leaf = propertyPath.substring(propertyPath.lastIndexOf('.') + 1);
+        return "$" + leaf;
+    }
+
     @Override
     public List<DslEntry> emitWhen(RuleModel model) {
 
         String ifCondition = model.ruleRow().ifCondition();
-        // ---------------------------------------------------------
-
         Br455ListRule rule = parser.parse(ifCondition);
         Br455RootFactRegistry.Resolved r = registry.resolve(rule.fieldPath());
+        String fieldVar = fieldVar(r.propertyPath());
 
-        // Bind the domain value (NO eval)
-        // e.g. $d : DeclarationFact( $v : invoiceAmount.unitType.code )
         String bind = r.alias() + " : " + r.factClassSimpleName()
-                + "( $v : " + r.propertyPath() + " )";
+                + "( " + fieldVar + " : " + r.propertyPath() + " )";
 
-        // Membership violation pattern
-        // MUST_EXIST -> violation is "not RefDataEntry(listName == X, value == $v)"
-        // MUST_NOT   -> violation is "RefDataEntry(listName == X, value == $v)"
-        String listName = rule.listName();
         String violation = (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST)
-                ? "not RefDataEntry( listName == \"{value}\", value == $v )"
-                : "RefDataEntry( listName == \"{value}\", value == $v )";
+                ? "not RefDataEntry( listName == \"{value}\", value == " + fieldVar + " )"
+                : "RefDataEntry( listName == \"{value}\", value == " + fieldVar + " )";
 
 
         String rhs = bind + "\n" + violation;
@@ -54,7 +54,6 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
                 (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST
                         ? "must exist in list {value}"
                         : "must not exist in list {value}");
-
 
         DslKey key = new DslKey(
                 "BR455",
@@ -71,15 +70,16 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
 
 
 
+    // =========================
+// CHANGED METHOD: emitThen()
+// =========================
     @Override
     public List<DslEntry> emitThen(RuleModel model) {
 
-        // =========================
-        // CHANGED METHOD: emitThen()
-        // =========================
         String ifCondition = model.ruleRow().ifCondition();
         Br455ListRule rule = parser.parse(ifCondition);
 
+        // DSL THEN LHS (human-readable key)
         String lhs = Br455ThenMessageFormatter.buildThenDslLhs(
                 "BR455",
                 rule.fieldPath(),
@@ -87,14 +87,16 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
                 rule.listName()
         );
 
-        String msg = Br455ThenMessageFormatter.buildThenMessage(
-                "BR455",
-                rule.fieldPath(),
-                rule.mode(),
-                rule.listName()
+        // Get the correct root alias ($d / $cs / $gi)
+        Br455RootFactRegistry.Resolved r = registry.resolve(rule.fieldPath());
+        String rootAlias = r.alias();
+
+        // Build the *typed* RHS: insert(emitter.emit("BR455", $gi, Br455Leaf.VM_TYPE));
+        Br455ThenRhsBuilder rhsBuilder = new Br455ThenRhsBuilder(
+                new Br455LeafResolver(Br455LeafResolver.Mode.DEMO)
         );
 
-        String rhs = "System.out.println(\"" + escape(msg) + "\");";
+        String rhs = rhsBuilder.buildDslRhs("BR455", rootAlias, rule.fieldPath(),rule.listName());
 
         DslKey key = new DslKey(
                 "BR455",
@@ -103,7 +105,7 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
                 rootKey(rule.fieldPath()),
                 rootKey(rule.fieldPath()),
                 stripRoot(rule.fieldPath()),
-                "PRINT"
+                "EMIT_TYPED"
         );
 
         return List.of(new DslEntry(key, "then", lhs, rhs));

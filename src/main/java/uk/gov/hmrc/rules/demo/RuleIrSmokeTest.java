@@ -25,22 +25,11 @@ public class RuleIrSmokeTest {
 // ======================================================
 
         RulePipelineRegistry registry = new RulePipelineRegistry();
-
-        // 1) your existing rows creation (keep it as-is)
         List<RuleRow> rows = Demo455SmokeRows.create();
-
         for (RuleRow row : rows) {
-            System.out.println("==================================================");
-            System.out.println("RuleRow id  : " + row.id());
-            System.out.println("IF   (excel): " + row.ifCondition());
-            System.out.println("THEN (excel): " + row.thenCondition());
-            System.out.println();
-
             registry.get(row.getRuleSet()).process(row);
             System.out.println();
-
         }
-
     }
 
     private static void addRows(List<RuleRow> rows) {

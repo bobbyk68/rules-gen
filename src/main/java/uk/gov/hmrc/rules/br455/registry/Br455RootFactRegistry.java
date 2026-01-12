@@ -12,8 +12,8 @@ public final class Br455RootFactRegistry {
         String root = parts[0].trim();
 
         return switch (root) {
-            case "Declaration" -> new Resolved("DeclarationFact", "$d", toDroolsPropertyPath(parts, 1));
-            case "ConsignmentShipment" -> new Resolved("ConsignmentShipmentFact", "$cs", toDroolsPropertyPath(parts, 1));
+            case "Declaration" -> new Resolved("DeclarationFact", "$decl", toDroolsPropertyPath(parts, 1));
+            case "ConsignmentShipment" -> new Resolved("ConsignmentShipmentFact", "$cons", toDroolsPropertyPath(parts, 1));
             case "GoodsItem" -> new Resolved("GoodsItemFact", "$gi", toDroolsPropertyPath(parts, 1));
             default -> throw new IllegalArgumentException("Unsupported BR455 root: '" + root + "' in " + raw);
         };
