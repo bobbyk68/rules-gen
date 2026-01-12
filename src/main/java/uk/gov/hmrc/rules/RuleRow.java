@@ -20,6 +20,8 @@ public class RuleRow {
     private final String errorCode;
     private final String param;
     private final RuleSet ruleSet;
+    private final String col6;   // raw Column 6 text, exactly as read from Excel
+
 
 
 
@@ -30,7 +32,7 @@ public class RuleRow {
                    String thenCondition,
                    String errorCode,
                    String param,
-                   RuleSet ruleSet) {
+                   RuleSet ruleSet, String col6) {
         this.id = id;
         this.declarationType = List.copyOf(declarationType);
         this.procedureCategory = List.copyOf(procedureCategory);
@@ -39,6 +41,26 @@ public class RuleRow {
         this.errorCode = errorCode;
         this.param = param;
         this.ruleSet = ruleSet;
+        this.col6 = col6;
+    }
+
+    public RuleRow(String id,
+                   List<String> declarationType,
+                   List<String> procedureCategory,
+                   String ifCondition,
+                   String thenCondition,
+                   String errorCode,
+                   String param, String col6
+    ) {
+        this.id = id;
+        this.declarationType = List.copyOf(declarationType);
+        this.procedureCategory = List.copyOf(procedureCategory);
+        this.ifCondition = ifCondition;
+        this.thenCondition = thenCondition;
+        this.errorCode = errorCode;
+        this.param = param;
+        this.ruleSet = RuleSetResolver.fromRuleId(id);
+        this.col6 = col6;
     }
 
     public RuleRow(String id,
@@ -48,7 +70,7 @@ public class RuleRow {
                    String thenCondition,
                    String errorCode,
                    String param
-                   ) {
+    ) {
         this.id = id;
         this.declarationType = List.copyOf(declarationType);
         this.procedureCategory = List.copyOf(procedureCategory);
@@ -57,6 +79,7 @@ public class RuleRow {
         this.errorCode = errorCode;
         this.param = param;
         this.ruleSet = RuleSetResolver.fromRuleId(id);
+        this.col6 = null;
     }
 
     public String id() {
@@ -90,4 +113,9 @@ public class RuleRow {
     public RuleSet getRuleSet() {
         return ruleSet;
     }
+
+    public String rawCol6() {
+        return col6;
+    }
+
 }

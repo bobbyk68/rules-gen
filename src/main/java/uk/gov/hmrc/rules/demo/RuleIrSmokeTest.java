@@ -1,13 +1,9 @@
 package uk.gov.hmrc.rules.demo;
 
 import uk.gov.hmrc.rules.RuleRow;
-import uk.gov.hmrc.rules.dsl.*;
-import uk.gov.hmrc.rules.ir.ActionNode;
-import uk.gov.hmrc.rules.ir.EmitErrorActionNode;
-import uk.gov.hmrc.rules.ir.ConditionNode;
-import uk.gov.hmrc.rules.ir.FactConditionNode;
-import uk.gov.hmrc.rules.ir.ParentConditionNode;
-import uk.gov.hmrc.rules.ir.RuleModel;
+import uk.gov.hmrc.rules.dsl.DslEmission;
+import uk.gov.hmrc.rules.dsl.DslEntry;
+import uk.gov.hmrc.rules.ir.*;
 import uk.gov.hmrc.rules.parsing.ParsedCondition;
 import uk.gov.hmrc.rules.pipeline.RulePipelineRegistry;
 
@@ -17,6 +13,7 @@ public class RuleIrSmokeTest {
 
     public static void main(String[] args) {
         RulePipelineRegistry registry = new RulePipelineRegistry();
+
         List<RuleRow> rows = Demo455SmokeRows.create();
         for (RuleRow row : rows) {
             registry.get(row.getRuleSet()).process(row);
