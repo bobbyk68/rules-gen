@@ -16,14 +16,6 @@ import java.util.List;
 public class RuleIrSmokeTest {
 
     public static void main(String[] args) {
-
-
-// ======================================================
-// Consolidated BR675 smoke rows
-// - Exact duplicates removed (your IDs win)
-// - ID collisions resolved by suffixing (_A/_B/_SMOKE)
-// ======================================================
-
         RulePipelineRegistry registry = new RulePipelineRegistry();
         List<RuleRow> rows = Demo455SmokeRows.create();
         for (RuleRow row : rows) {
