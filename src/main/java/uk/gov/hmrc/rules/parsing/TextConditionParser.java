@@ -48,6 +48,12 @@ public class TextConditionParser implements ConditionParser {
         // NEW: fixes "at least one X must is provided"
         raw = raw.replaceAll("(?i)\\s+must\\s+is\\s+provided\\s*", " must be provided ");
 
+        raw = raw.replaceAll("(?i)\\s+must\\s+does\\s+not\\s+equal\\s+", " must not equal ");
+        raw = raw.replaceAll("(?i)\\s+must\\s+do\\s+not\\s+equal\\s+", " must not equal ");
+        raw = raw.replaceAll("(?i)\\s+must\\s+does\\s+not\\s+equals\\s+", " must not equal ");
+
+
+
 
         String lower = raw.toLowerCase();
 
@@ -119,6 +125,13 @@ public class TextConditionParser implements ConditionParser {
 
             operatorCode = mapOperatorPhraseToCode(matchedOperatorPhrase.trim());
         }
+
+        if (canonicalPath.toLowerCase().contains(" must ")
+                || canonicalPath.toLowerCase().contains(" equals ")
+                || canonicalPath.toLowerCase().contains(" not ")) {
+            throw new IllegalStateException("Canonical path still contains operator words: [" + canonicalPath + "] from raw=[" + raw + "]");
+        }
+
 
         // 3) MIDDLE – canonical path → entity/anchor/field/label
         DomainFieldDescriptor field = fieldResolver.resolve(canonicalPath);
