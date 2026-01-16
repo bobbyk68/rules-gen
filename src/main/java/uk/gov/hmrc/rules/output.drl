@@ -1,0 +1,53 @@
+rule "ZZ_DEBUG_dump_refdata_and_types"
+salience 100000
+when
+then
+    System.out.println("=== DEBUG DUMP START ===");
+
+    // Dump all RefDataSetFact names + values
+    for (Object o : drools.getKieRuntime().getObjects()) {
+        if (o instanceof uk.gov.hmrc.cars.domain.RefDataSetFact) {
+            uk.gov.hmrc.cars.domain.RefDataSetFact r = (uk.gov.hmrc.cars.domain.RefDataSetFact) o;
+            System.out.println("REFDATA: name=[" + r.getName() + "] values=" + r.getValues());
+        }
+        if (o instanceof uk.gov.hmrc.cars.domain.GoodsItemAdditionalDocumentFact) {
+            uk.gov.hmrc.cars.domain.GoodsItemAdditionalDocumentFact d =
+                (uk.gov.hmrc.cars.domain.GoodsItemAdditionalDocumentFact) o;
+            System.out.println("ADOC: typeCode=[" + d.getTypeCode() + "] fact=" + d);
+        }
+    }
+
+    System.out.println("=== DEBUG DUMP END ===");
+end
+
+rule "ZZ_DEBUG_membership_truth"
+salience 99999
+when
+    $doc : uk.gov.hmrc.cars.domain.GoodsItemAdditionalDocumentFact( $raw : typeCode )
+    $ref : uk.gov.hmrc.cars.domain.RefDataSetFact( name == "DeferredPaymentDocuments", $vals : values )
+then
+    String norm = ($raw == null) ? null : $raw.trim().toUpperCase();
+    boolean ok = (norm != null) && $vals.contains(norm);
+
+    System.out.println("TRUTH: raw=[" + $raw + "] norm=[" + norm + "] list=" + $vals + " contains? " + ok);
+end
+
+
+rule "BR455_167_FIXED"
+when
+    $doc : uk.gov.hmrc.cars.domain.GoodsItemAdditionalDocumentFact( $raw : typeCode )
+    $ref : uk.gov.hmrc.cars.domain.RefDataSetFact( name == "DeferredPaymentDocuments", $vals : values )
+    $norm : String() from ( $raw == null ? null : $raw.trim().toUpperCase() )
+    eval( $norm == null || !$vals.contains($norm) )
+then
+    // emit violation
+end
+
+
+System.out.println("BR455_167 FIRED rawType=[" + $type + "] fact=" + $declAdDoc);
+$declAdDoc : GoodsItemAdditionalDocumentFact($type : typeCode, $type != null && $type.trim().length > 0)
+src/main/resources/rules/debug/ZZ_debug_refdata.drl
+
+
+KieServices ks = KieServices.Factory.get();
+KieContainer kc = ks.getKieClasspathContainer();

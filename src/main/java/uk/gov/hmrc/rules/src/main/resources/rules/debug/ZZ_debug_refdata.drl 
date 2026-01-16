@@ -1,0 +1,18 @@
+package uk.gov.hmrc.cars.rules.debug
+
+import uk.gov.hmrc.cars.domain.RefDataSetFact
+import uk.gov.hmrc.cars.domain.GoodsItemAdditionalDocumentFact
+
+rule "ZZ_DEBUG_membership_truth"
+salience 100000
+when
+    $doc : GoodsItemAdditionalDocumentFact( $raw : typeCode )
+    $ref : RefDataSetFact( name == "DeferredPaymentDocuments", $vals : values )
+then
+    String norm = ($raw == null) ? null : $raw.trim().toUpperCase();
+    boolean ok = (norm != null) && $vals.contains(norm);
+
+    System.out.println(
+        "TRUTH raw=[" + $raw + "] norm=[" + norm + "] list=" + $vals + " contains=" + ok
+    );
+end

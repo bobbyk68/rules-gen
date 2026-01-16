@@ -1,0 +1,8 @@
+SITE="https://YOURCOMPANY.atlassian.net"
+PAGE_ID="123456789"
+AUTH_EMAIL="you@company.com"
+API_TOKEN="YOUR_TOKEN"
+
+curl -s -u "${AUTH_EMAIL}:${API_TOKEN}" \
+  -H "Accept: application/json" \
+  "${SITE}/wiki/rest/api/content/${PAGE_ID}?expand=body.storage,version" > page.json
