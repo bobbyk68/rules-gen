@@ -51,3 +51,21 @@ src/main/resources/rules/debug/ZZ_debug_refdata.drl
 
 KieServices ks = KieServices.Factory.get();
 KieContainer kc = ks.getKieClasspathContainer();
+
+$declAdDoc : GoodsItemAdditionalDocumentFact( $type : typeCode, $type != null && $type.trim().length > 0 )
+$ref : RefDataSetFact( name == "DeferredPaymentDocuments", $vals : values )
+$norm : String() from ( $type.trim().toUpperCase() )
+eval( !$vals.contains($norm) )
+
+$doc : GoodsItemAdditionalDocumentFact( $raw : typeCode, $raw != null && $raw.trim().length > 0 )
+$ref : RefDataSetFact( name == "DeferredPaymentDocuments", $vals : values )
+$norm : String() from ( $raw.trim().toUpperCase() )
+eval( !$vals.contains($norm) )
+
+
+String norm = ($type == null) ? null : $type.trim().toUpperCase();
+System.out.println(
+  "BR455_VIOLATION FIRED raw=[" + $type + "] norm=[" + norm + "] fact=" + $declAdDoc
+);
+$declAdDoc : GoodsItemAdditionalDocumentFact( $type : typeCode, $type != null && $type.trim().length > 0 )
+
