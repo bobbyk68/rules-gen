@@ -94,4 +94,11 @@ public final class Br455RootFactRegistry {
             String alias,               // $d / $cs / $gi
             String propertyPath         // invoiceAmount.unitType.code etc (camelised)
     ) {}
+
+//    private static final Map<String, Map<String, ResolutionSpec>> ROUTES = Map.of(
+//            "GoodsItem", GoodsItemRoutes.map(),
+//            "ConsignmentShipment", ConsignmentShipmentRoutes.map(),
+//            "Declaration", DeclarationRoutes.map()
+//    );
+
 }
