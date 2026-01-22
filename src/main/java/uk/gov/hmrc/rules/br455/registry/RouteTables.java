@@ -2,41 +2,22 @@ package uk.gov.hmrc.rules.br455.registry;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public final class RouteTables {
 
-    private RouteTables() { }
 
-    public static Map<RouteKey, RouteSpec> routes() {
-        Map<RouteKey, RouteSpec> m = new HashMap<>();
+        private static final Map<RouteKey, RouteSpec> ROUTES = build();
 
-        // ConsignmentShipment child groups
-        m.put(new RouteKey("ConsignmentShipment", "BorderTransportMeans"),
-                new RouteSpec("BorderTransportMeansFact", "$btm", 2));
+        private static Map<RouteKey, RouteSpec> build() {
+            Map<RouteKey, RouteSpec> m = new HashMap<>();
 
-        m.put(new RouteKey("ConsignmentShipment", "ArrivalTransportMeans"),
-                new RouteSpec("ArrivalTransportMeansFact", "$atm", 2));
+            // 🔽 your 13 entries go here (exactly as shown)
 
-        m.put(new RouteKey("ConsignmentShipment", "previousDocuments"),
-                new RouteSpec("PreviousDocumentFact", "$prevDoc", 2));
+            return Map.copyOf(m);
+        }
 
-        m.put(new RouteKey("ConsignmentShipment", "GoodsLocation"),
-                new RouteSpec("GoodsLocationFact", "$glc", 2));
-
-        // GoodsItem child groups
-        m.put(new RouteKey("GoodsItem", "additionalInformation"),
-                new RouteSpec("GoodsItemAdditionalInformationFact", "$ai", 2));
-
-        m.put(new RouteKey("GoodsItem", "additionalDocuments"),
-                new RouteSpec("GoodsItemAdditionalDocumentFact", "$ad", 2));
-
-        m.put(new RouteKey("GoodsItem", "valuationAdjustments"),
-                new RouteSpec("GoodsItemValuationAdjustmentFact", "$va", 2));
-
-        // Declaration child groups (if any)
-        m.put(new RouteKey("Declaration", "AuthorizationHolder"),
-                new RouteSpec("AuthorizationHolderFact", "$auth", 2));
-
-        return Map.copyOf(m);
+        public static Optional<RouteSpec> lookup(RouteKey key) {
+            return Optional.ofNullable(ROUTES.get(key));
+        }
     }
-}
