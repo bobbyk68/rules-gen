@@ -1,6 +1,11 @@
 package uk.gov.hmrc.rules.br455.registry;
 
+import java.util.Map;
+
 public final class Br455RootFactRegistry {
+
+    private final Map<RouteKey, RouteSpec> routes = RouteTables.routes();
+    private final FieldPathRewriter rewriter = new FieldPathRewriter();
 
     public Resolved resolve(String spreadsheetFieldPath) {
         String raw = safe(spreadsheetFieldPath);
@@ -10,95 +15,76 @@ public final class Br455RootFactRegistry {
         if (parts.length < 2) throw new IllegalArgumentException("BR455 fieldPath must include root + path: " + raw);
 
         String root = parts[0].trim();
+        String segment1 = parts[1].trim();
 
-        return switch (root) {
+        RouteSpec spec = routes.get(new RouteKey(root, segment1));
 
-            case "Declaration" ->
-                    new Resolved("DeclarationFact", "$decl", toDroolsPropertyPath(parts, 1));
-
-            case "ConsignmentShipment" ->
-                    new Resolved("ConsignmentShipmentFact", "$cons", toDroolsPropertyPath(parts, 1));
-
-            case "GoodsItem" -> resolveGoodsItem(parts, raw);
-
-            default ->
-                    throw new IllegalArgumentException("Unsupported BR455 root: '" + root + "' in " + raw);
+        // default: root fact
+        String fact = switch (root) {
+            case "Declaration" -> "DeclarationFact";
+            case "ConsignmentShipment" -> "ConsignmentShipmentFact";
+            case "GoodsItem" -> "GoodsItemFact";
+            default -> throw new IllegalArgumentException("Unsupported BR455 root: '" + root + "' in " + raw);
         };
-    }
 
-    private Resolved resolveGoodsItem(String[] parts, String raw) {
+        String alias = switch (root) {
+            case "Declaration" -> "$decl";
+            case "ConsignmentShipment" -> "$cons";
+            case "GoodsItem" -> "$gi";
+            default -> "$root";
+        };
 
-        // parts[0] = GoodsItem
-        // parts[1] = first segment after root (e.g. "additionalInformation", "specialProcedures", ...)
-        String segment1 = parts.length > 1 ? parts[1].trim() : "";
+        int startIndex = 1;
 
-        // --- Path-aware overrides (specific beats general) -----------------------
-
-        if ("additionalInformation".equals(segment1)) {
-            // GoodsItem.additionalInformation.code -> GoodsItemAdditionalDocumentFact(code)
-            // Typically, for a child fact, the property path should start *within that child*.
-            // So "code" not "additionalInformation.code"
-            if (parts.length < 3) {
-                throw new IllegalArgumentException("BR455 GoodsItem.additionalInformation must include a field: " + raw);
-            }
-            return new Resolved(
-                    "GoodsItemAdditionalDocumentFact",
-                    "$aid",
-                    toDroolsPropertyPath(parts, 2)
-            );
+        // override: child fact
+        if (spec != null) {
+            fact = spec.factClassSimpleName();
+            alias = spec.factAlias();
+            startIndex = spec.startIndex();
         }
 
-        if ("specialProcedures".equals(segment1)) {
-            if (parts.length < 3) {
-                throw new IllegalArgumentException("BR455 GoodsItem.specialProcedures must include a field: " + raw);
-            }
-            return new Resolved(
-                    "GoodsItemSpecialProcedureTypeFact",
-                    "$sp",
-                    toDroolsPropertyPath(parts, 2)
-            );
+        String bindPath = toDroolsPropertyPath(parts, startIndex);
+        bindPath = rewriter.rewriteBindPath(root, bindPath);
+
+        String dslFieldName = dslNameFromSpreadsheet(parts);      // human-friendly
+        String fieldVar = fieldVarFromBindPath(bindPath);         // $modeCode, $nationalityCode, etc.
+
+        return new Resolved(fact, alias, bindPath, dslFieldName, fieldVar);
+    }
+
+    private String dslNameFromSpreadsheet(String[] parts) {
+        // e.g. ConsignmentShipment.BorderTransportMeans.mode.code -> BorderTransportMeansModeCode
+        // Use last 2-3 segments; tweak to taste.
+        if (parts.length < 2) return "value";
+        String leaf = parts[parts.length - 1];
+        String prev = parts.length >= 2 ? parts[parts.length - 2] : "";
+        if (isTooGeneric(leaf)) return prev + capitalize(leaf);
+        return leaf;
+    }
+
+    private String fieldVarFromBindPath(String bindPath) {
+        // e.g. mode.code -> $modeCode, nationality.code -> $nationalityCode
+        if (bindPath == null || bindPath.isBlank()) return "$v";
+        String[] segs = bindPath.split("\\.");
+        String leaf = segs[segs.length - 1];
+        if (isTooGeneric(leaf) && segs.length >= 2) {
+            String prev = segs[segs.length - 2];
+            return "$" + decapitalize(prev + capitalize(leaf));
         }
-
-        // --- Default GoodsItem fallback ------------------------------------------
-        return new Resolved("GoodsItemFact", "$gi", toDroolsPropertyPath(parts, 1));
+        return "$" + decapitalize(leaf);
     }
 
-
-    private static String toDroolsPropertyPath(String[] parts, int startIndex) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = startIndex; i < parts.length; i++) {
-            String seg = parts[i].trim();
-            if (seg.isEmpty()) continue;
-
-            if (sb.length() > 0) sb.append('.');
-            sb.append(toCamel(seg));
-        }
-        return sb.toString();
+    private boolean isTooGeneric(String s) {
+        return s != null && (s.equalsIgnoreCase("code") || s.equalsIgnoreCase("value") || s.equalsIgnoreCase("type"));
     }
 
-    private static String toCamel(String seg) {
-        if (seg.isEmpty()) return seg;
-
-        char c0 = seg.charAt(0);
-        if (Character.isLowerCase(c0)) return seg;
-
-        return Character.toLowerCase(c0) + seg.substring(1);
+    private String capitalize(String s) {
+        if (s == null || s.isBlank()) return "";
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
-    private static String safe(String s) {
-        return s == null ? "" : s.trim();
+    private String decapitalize(String s) {
+        if (s == null || s.isBlank()) return s;
+        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
     }
-
-    public record Resolved(
-            String factClassSimpleName, // DeclarationFact / ConsignmentShipmentFact / GoodsItemFact
-            String alias,               // $d / $cs / $gi
-            String propertyPath         // invoiceAmount.unitType.code etc (camelised)
-    ) {}
-
-//    private static final Map<String, Map<String, ResolutionSpec>> ROUTES = Map.of(
-//            "GoodsItem", GoodsItemRoutes.map(),
-//            "ConsignmentShipment", ConsignmentShipmentRoutes.map(),
-//            "Declaration", DeclarationRoutes.map()
-//    );
-
 }
