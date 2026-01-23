@@ -51,58 +51,23 @@ public final class Br455RootFactRegistry {
         //String dslFieldName = dslNameFromSpreadsheet(parts);      // human-friendly
         String fieldVar = fieldVarFromBindPath(bindPath);         // $modeCode, $nationalityCode, etc.
 
-        return new Resolved(new ResolvedField(fact, alias, bindPath));
-    }
 
-    // Version: 2026-01-23
-    public ResolvedField resolve(String spreadsheetFieldPath) {
-        String raw = safe(spreadsheetFieldPath);
-        if (raw.isBlank()) throw new IllegalArgumentException("BR455 fieldPath is blank");
 
-        String[] parts = raw.split("\\.");
-        if (parts.length < 2) throw new IllegalArgumentException("BR455 fieldPath must include root + path: " + raw);
 
-        String root = parts[0].trim();
-        String segment1 = parts[1].trim();
+        Class<?> rootType = factClassRegistry.resolveFactClass(routeKey);
 
-        RouteSpec spec = routes.get(new RouteKey(root, segment1));
-
-        // default: root fact
-        String fact = switch (root) {
-            case "Declaration" -> "DeclarationFact";
-            case "ConsignmentShipment" -> "ConsignmentShipmentFact";
-            case "GoodsItem" -> "GoodsItemFact";
-            default -> throw new IllegalArgumentException("Unsupported BR455 root: " + root + " in " + raw);
-        };
-
-        String alias = switch (root) {
-            case "Declaration" -> "$decl";
-            case "ConsignmentShipment" -> "$cons";
-            case "GoodsItem" -> "$gi";
-            default -> "$root";
-        };
-
-        int startIndex = 1;
-
-        // override: child fact
-        if (spec != null) {
-            fact = spec.factClassSimpleName();
-            alias = spec.factAlias();
-            startIndex = spec.startIndex();
+        String bindPath;
+        if (useReflectionResolver) {
+            bindPath = reflectionResolver
+                    .resolveScalar(rootType, excelPath)
+                    .getPath();
+        } else {
+            bindPath = fieldResolver.resolve(routeKey, excelPath);
         }
 
-        String bindPath = toDroolsPropertyPath(parts, startIndex);
 
-        // IMPORTANT: rewrite after routing, using fact context
-        bindPath = rewriter.rewriteBindPath(fact, bindPath);
-
-        // you compute these today but don't store them in your 3-field record (fine)
-        String dslFieldName = dslNameFromSpreadsheet(segment1, parts);
-        String fieldVar = fieldVarFrom(segment1, bindPath);
-
-        return new ResolvedField(fact, alias, bindPath);
+        return new Resolved(new ResolvedField(fact, alias, bindPath));
     }
-
 
 
     // Version: 2026-01-23
