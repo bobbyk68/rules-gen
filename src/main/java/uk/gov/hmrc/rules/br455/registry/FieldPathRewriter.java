@@ -29,7 +29,7 @@ public final class FieldPathRewriter {
                 "ConsignmentShipmentPreviousDocumentFact", Map.of(
                         "type.code", "typeCode",
                         "category.code", "category"
-                ),
+                )
                 // Example: transport means often have mode and type flattened
 //                "ConsignmentShipmentFact", Map.of(
 //                        // ONLY if your ConsignmentShipmentFact actually needs these
@@ -46,7 +46,7 @@ public final class FieldPathRewriter {
      * @param segment1 original spreadsheet segment1 (useful if you want later)
      * @param bindPath the drools property path starting at startIndex (e.g. "type.code")
      */
-    public String rewriteBindPath(String factClassSimpleName, String segment1, String bindPath) {
+    public String rewriteBindPath(String factClassSimpleName, String bindPath) {
         if (bindPath == null || bindPath.isBlank()) return bindPath;
 
         String out = bindPath;

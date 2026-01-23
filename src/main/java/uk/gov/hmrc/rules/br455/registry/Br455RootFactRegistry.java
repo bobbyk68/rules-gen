@@ -51,10 +51,11 @@ public final class Br455RootFactRegistry {
         //String dslFieldName = dslNameFromSpreadsheet(parts);      // human-friendly
         String fieldVar = fieldVarFromBindPath(bindPath);         // $modeCode, $nationalityCode, etc.
 
-        return new Resolved(fact, alias, bindPath, "", fieldVar);
+        return new Resolved(new ResolvedField(fact, alias, bindPath));
     }
 
-    public Resolved resolve(String spreadsheetFieldPath) {
+    // Version: 2026-01-23
+    public ResolvedField resolve(String spreadsheetFieldPath) {
         String raw = safe(spreadsheetFieldPath);
         if (raw.isBlank()) throw new IllegalArgumentException("BR455 fieldPath is blank");
 
@@ -71,7 +72,7 @@ public final class Br455RootFactRegistry {
             case "Declaration" -> "DeclarationFact";
             case "ConsignmentShipment" -> "ConsignmentShipmentFact";
             case "GoodsItem" -> "GoodsItemFact";
-            default -> throw new IllegalArgumentException("Unsupported BR455 root: '" + root + "' in " + raw);
+            default -> throw new IllegalArgumentException("Unsupported BR455 root: " + root + " in " + raw);
         };
 
         String alias = switch (root) {
@@ -93,17 +94,27 @@ public final class Br455RootFactRegistry {
         String bindPath = toDroolsPropertyPath(parts, startIndex);
 
         // IMPORTANT: rewrite after routing, using fact context
-        bindPath = rewriter.rewriteBindPath(fact, segment1, bindPath);
+        bindPath = rewriter.rewriteBindPath(fact, bindPath);
 
+        // you compute these today but don't store them in your 3-field record (fine)
         String dslFieldName = dslNameFromSpreadsheet(segment1, parts);
         String fieldVar = fieldVarFrom(segment1, bindPath);
 
-        return new Resolved(fact, alias, bindPath, dslFieldName, fieldVar);
+        return new ResolvedField(fact, alias, bindPath);
     }
 
+
+
+    // Version: 2026-01-23
     private String toDroolsPropertyPath(String[] parts, int startIndex) {
-        if (startIndex >= parts.length) return "";
-        return String.join(".", Arrays.copyOfRange(parts, startIndex, parts.length));
+        if (startIndex >= parts.length) {
+            throw new IllegalArgumentException("No property segments after root");
+        }
+        StringBuilder sb = new StringBuilder(parts[startIndex]);
+        for (int i = startIndex + 1; i < parts.length; i++) {
+            sb.append('.').append(parts[i]);
+        }
+        return sb.toString();
     }
 
     private String dslNameFromSpreadsheet(String segment1, String[] parts) {
@@ -183,6 +194,37 @@ public final class Br455RootFactRegistry {
 
     private boolean isGenericLeaf(String s) {
         return s != null && (s.equalsIgnoreCase("code") || s.equalsIgnoreCase("value") || s.equalsIgnoreCase("id"));
+    }
+
+    // Version: 2026-01-23
+    public ResolvedField resolveField(String rootFact, String spreadsheetFieldPath) {
+
+        // 1) Tokenise: e.g. "GoodsItem.investmentTypeCode" -> ["GoodsItem","investmentTypeCode"]
+        // (If you already have parts elsewhere, keep that and delete this split.)
+        String[] parts = spreadsheetFieldPath.split("\\.");
+        if (parts.length == 0) {
+            throw new IllegalArgumentException("Empty field path");
+        }
+
+        // 2) Resolve alias for the root fact (e.g. GoodsItem -> $gi)
+        // (Replace with your real alias resolver / registry call)
+        String alias = aliasResolver.aliasForRoot(rootFact);
+
+        // 3) Build an initial drools property path *after the root*.
+        // If the spreadsheet includes the root in the path (common), skip it.
+        int startIndex = 0;
+        if (parts.length > 1 && parts[0].equals(rootFact)) {
+            startIndex = 1;
+        }
+
+        String bindPath = toDroolsPropertyPath(parts, startIndex); // e.g. "investmentTypeCode"
+
+        // 4) Rewrite exceptions / normalise to the real model path
+        // e.g. "investmentTypeCode" -> "investment.typeCode"
+        bindPath = fieldPathRewriter.rewriteBindPath(rootFact, bindPath);
+
+        // 5) Freeze it: from here on, DRL generation should be dumb/string-based
+        return new ResolvedField(rootFact, alias, bindPath);
     }
 
 
