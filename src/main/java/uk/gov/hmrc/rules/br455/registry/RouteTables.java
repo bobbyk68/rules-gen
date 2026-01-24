@@ -20,4 +20,8 @@ public final class RouteTables {
         public static Optional<RouteSpec> lookup(RouteKey key) {
             return Optional.ofNullable(ROUTES.get(key));
         }
+
+    public static Map<RouteKey, RouteSpec> routes() {
+            return build();
     }
+}

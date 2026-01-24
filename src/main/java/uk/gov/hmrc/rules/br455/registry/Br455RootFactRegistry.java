@@ -66,9 +66,72 @@ public final class Br455RootFactRegistry {
         }
 
 
+        FactSpec spec = factSpecResolver.resolve(routeKey, spreadsheetFieldPath);
+
+        String fact = spec.factClassSimpleName();
+        String alias = spec.factAlias();
+        int startIndex = spec.startIndex();
+
+        Class<?> rootType = factClassRegistry.resolveFactClass(fact);
+
+        String[] parts = splitSpreadsheetPath(spreadsheetFieldPath);
+
+        String bindPath;
+        try {
+            bindPath = reflectionScalarPathResolver.resolveScalar(rootType, parts, startIndex).getPath();
+        } catch (RuntimeException firstFailure) {
+
+            String[] rewritten = tailRewrite(parts, fact); // your hashmap exceptions
+            bindPath = reflectionScalarPathResolver.resolveScalar(rootType, rewritten, startIndex).getPath();
+        }
+
+        String fieldVar = fieldVarFromBindPath(bindPath);
+
         return new Resolved(new ResolvedField(fact, alias, bindPath));
     }
 
+    public static String[] splitSpreadsheetPath(String spreadsheetFieldPath) {
+
+        if (spreadsheetFieldPath == null) {
+            throw new IllegalArgumentException("spreadsheetFieldPath must not be null");
+        }
+
+        String s = spreadsheetFieldPath.trim();
+        if (s.isEmpty()) {
+            throw new IllegalArgumentException("spreadsheetFieldPath must not be blank");
+        }
+
+        // Remove any [123] index markers (common in spreadsheet-like paths)
+        // Example: "GoodsItem[1].mode.code" -> "GoodsItem.mode.code"
+        s = s.replaceAll("\\[\\s*\\d+\\s*\\]", "");
+
+        // Normalise arrow separators to dots (supports "->" or "→")
+        s = s.replace("→", "->");
+        s = s.replaceAll("\\s*->\\s*", ".");
+
+        // Split on ".", "/", "\" and whitespace-surrounded dots/arrows already handled
+        // Keep it simple and robust.
+        String[] raw = s.split("[./\\\\]+");
+
+        // Filter empties + trim each segment
+        java.util.ArrayList<String> parts = new java.util.ArrayList<>();
+        for (String seg : raw) {
+            if (seg == null) {
+                continue;
+            }
+            String t = seg.trim();
+            if (!t.isEmpty()) {
+                parts.add(t);
+            }
+        }
+
+        if (parts.isEmpty()) {
+            throw new IllegalArgumentException("No path segments could be extracted from: " + spreadsheetFieldPath);
+        }
+
+        return parts.toArray(new String[0]);
+    }
+}
 
     // Version: 2026-01-23
     private String toDroolsPropertyPath(String[] parts, int startIndex) {

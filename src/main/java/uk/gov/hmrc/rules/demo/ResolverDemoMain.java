@@ -1,8 +1,8 @@
 package uk.gov.hmrc.rules.demo;
 
-import uk.gov.hmrc.rules.generator.resolver.reflection.NoOpExcelAliasResolver;
-import uk.gov.hmrc.rules.generator.resolver.reflection.ReflectionScalarPathResolver;
-import uk.gov.hmrc.rules.generator.resolver.reflection.ResolvedScalarPath;
+import uk.gov.hmrc.rules.br455.reflection.NoOpExcelAliasResolver;
+import uk.gov.hmrc.rules.br455.reflection.ReflectionScalarPathResolver;
+import uk.gov.hmrc.rules.br455.reflection.ResolvedScalarPath;
 
 // Version: 2026-01-23 v1.0.0
 public final class ResolverDemoMain {

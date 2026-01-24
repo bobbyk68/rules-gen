@@ -5,6 +5,7 @@ import uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter;
 import uk.gov.hmrc.rules.br455.lookup.Br455LeafResolver;
 import uk.gov.hmrc.rules.br455.parsing.Br455IfParser;
 import uk.gov.hmrc.rules.br455.registry.Br455RootFactRegistry;
+import uk.gov.hmrc.rules.br455.registry.Resolved;
 import uk.gov.hmrc.rules.br455.then.Br455ThenRhsBuilder;
 import uk.gov.hmrc.rules.dsl.DslEmission;
 import uk.gov.hmrc.rules.dsl.DslEntry;
@@ -36,7 +37,7 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         String ifCondition = model.ruleRow().ifCondition();
         Br455ListRule rule = parser.parse(ifCondition);
 
-        Br455RootFactRegistry.Resolved r = registry.resolve(rule.fieldPath());
+        Resolved r = registry.resolve(rule.fieldPath());
 
         String fieldVar = fieldVar(r.propertyPath());
 
@@ -92,7 +93,7 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         );
 
         // Get the correct root alias ($d / $cs / $gi)
-        Br455RootFactRegistry.Resolved r = registry.resolve(rule.fieldPath());
+        Resolved r = registry.resolve(rule.fieldPath());
         String rootAlias = r.alias();
 
         // Build the *typed* RHS: insert(emitter.emit("BR455", $gi, Br455Leaf.VM_TYPE));
