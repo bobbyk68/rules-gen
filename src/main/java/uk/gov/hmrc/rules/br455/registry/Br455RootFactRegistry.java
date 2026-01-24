@@ -1,6 +1,10 @@
 package uk.gov.hmrc.rules.br455.registry;
 
-import java.util.Arrays;
+import uk.gov.hmrc.rules.br455.resolve.PermissiveResolutionStrategy;
+import uk.gov.hmrc.rules.br455.resolve.ReflectionScalarPathResolver;
+import uk.gov.hmrc.rules.br455.resolve.SpreadsheetPathParser;
+import uk.gov.hmrc.rules.br455.resolve.StrictResolutionStrategy;
+
 import java.util.Map;
 
 public final class Br455RootFactRegistry {
@@ -56,15 +60,6 @@ public final class Br455RootFactRegistry {
 
         Class<?> rootType = factClassRegistry.resolveFactClass(routeKey);
 
-        String bindPath;
-        if (useReflectionResolver) {
-            bindPath = reflectionResolver
-                    .resolveScalar(rootType, excelPath)
-                    .getPath();
-        } else {
-            bindPath = fieldResolver.resolve(routeKey, excelPath);
-        }
-
 
         FactSpec spec = factSpecResolver.resolve(routeKey, spreadsheetFieldPath);
 
@@ -98,9 +93,9 @@ public final class Br455RootFactRegistry {
                 new PermissiveResolutionStrategy(BR455_LAST_RESORT_RENAMES)
         );
 
-// Example usage
-        String[] parts = SpreadsheetPathParser.splitSpreadsheetPath(spreadsheetFieldPath);
-        String bindPath = resolver.resolveScalarTwoPass(rootType, parts, startIndex).getPath();
+        // Example usage
+        parts = SpreadsheetPathParser.splitSpreadsheetPath(spreadsheetFieldPath);
+        bindPath = resolver.resolveScalarTwoPass(rootType, parts, startIndex).getPath();
 
 
 

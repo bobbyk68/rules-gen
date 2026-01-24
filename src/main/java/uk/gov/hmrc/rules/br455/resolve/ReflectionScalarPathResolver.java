@@ -1,6 +1,10 @@
 package uk.gov.hmrc.rules.br455.resolve;
 
 // Version: 2026-01-24
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public final class ReflectionScalarPathResolver {
 
     private final ResolutionStrategy strict;
@@ -20,6 +24,7 @@ public final class ReflectionScalarPathResolver {
         try {
             return resolveScalar(rootType, parts, startIndex, strict);
         } catch (RuntimeException first) {
+            log.debug("Strict resolution failed, retrying with permissive strategy");
             return resolveScalar(rootType, parts, startIndex, permissive);
         }
     }
