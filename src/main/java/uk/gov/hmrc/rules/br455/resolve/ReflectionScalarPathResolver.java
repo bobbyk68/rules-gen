@@ -84,6 +84,14 @@ public final class ReflectionScalarPathResolver {
                 }
             }
 
+            // Version: Resolver V2.1.0 (2026-01-24)
+// Ignore spreadsheet decorator tails like ".code" when reflection can't find them.
+// Example: ...nationality.code -> we stop at "...nationality".
+            if ("code".equals(normalised) && !resolvedSegments.isEmpty()) {
+                return new PathResolution(String.join(".", resolvedSegments));
+            }
+
+
             throw new IllegalArgumentException(
                     "Cannot resolve segment '" + original + "' (normalised '" + normalised + "') on type " + currentType.getName()
                             + " (root " + rootType.getName() + ", index " + i + ")"
