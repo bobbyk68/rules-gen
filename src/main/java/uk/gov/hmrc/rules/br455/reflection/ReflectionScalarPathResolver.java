@@ -114,30 +114,62 @@ public final class ReflectionScalarPathResolver {
         return null;
     }
 
+    // Version: 2026-01-24
     private java.lang.reflect.Method findNoArgMethod(Class<?> type, String methodName) {
+
+        // 1) Fast path: public method lookup (includes inherited)
+        try {
+            return type.getMethod(methodName);
+        } catch (NoSuchMethodException ignored) {
+            // fall through
+        }
+
+        // 2) Fallback: declared methods (package/private/protected) across hierarchy
         Class<?> t = type;
         while (t != null && t != Object.class) {
             try {
                 java.lang.reflect.Method m = t.getDeclaredMethod(methodName);
-                if (!m.canAccess(null)) {
+
+                // DO NOT call m.canAccess(null) for instance methods.
+                // If you truly need access, just attempt setAccessible and handle the failure.
+                try {
                     m.setAccessible(true);
+                } catch (RuntimeException ignored) {
+                    // In Java 17, this may throw InaccessibleObjectException under JPMS.
+                    // That's fine: caller can still try using the method if it's accessible.
                 }
+
                 return m;
+
             } catch (NoSuchMethodException ignored) {
                 // continue
             }
             t = t.getSuperclass();
         }
+
         return null;
     }
 
+
+    // Version: 2026-01-24
     private java.lang.reflect.Field findField(Class<?> type, String name) {
+
+        // 1) Public field lookup (includes inherited)
+        try {
+            return type.getField(name);
+        } catch (NoSuchFieldException ignored) {
+            // fall through
+        }
+
+        // 2) Declared field lookup across hierarchy
         Class<?> t = type;
         while (t != null && t != Object.class) {
             try {
                 java.lang.reflect.Field f = t.getDeclaredField(name);
-                if (!f.canAccess(null)) {
+                try {
                     f.setAccessible(true);
+                } catch (RuntimeException ignored) {
+                    // Java 17 module restrictions may block this.
                 }
                 return f;
             } catch (NoSuchFieldException ignored) {
@@ -145,8 +177,10 @@ public final class ReflectionScalarPathResolver {
             }
             t = t.getSuperclass();
         }
+
         return null;
     }
+
 
     private Class<?> unwrapCollectionElementType(java.lang.reflect.Type genericType, Class<?> rawType) {
 
