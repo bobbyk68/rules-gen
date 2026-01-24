@@ -87,6 +87,23 @@ public final class Br455RootFactRegistry {
 
         String fieldVar = fieldVarFromBindPath(bindPath);
 
+        // Version: 2026-01-24
+        java.util.Map<String, String> BR455_LAST_RESORT_RENAMES = java.util.Map.of(
+                // keep empty initially; add only true semantic mismatches
+                // "investmentType", "type"
+        );
+
+        ReflectionScalarPathResolver resolver = new ReflectionScalarPathResolver(
+                new StrictResolutionStrategy(),
+                new PermissiveResolutionStrategy(BR455_LAST_RESORT_RENAMES)
+        );
+
+// Example usage
+        String[] parts = SpreadsheetPathParser.splitSpreadsheetPath(spreadsheetFieldPath);
+        String bindPath = resolver.resolveScalarTwoPass(rootType, parts, startIndex).getPath();
+
+
+
         return new Resolved(new ResolvedField(fact, alias, bindPath));
     }
 
