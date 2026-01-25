@@ -54,6 +54,18 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
 
         String rhs = bind + "\n" + violation;
 
+        DottedPathExpander expander = new DottedPathExpander();
+        DottedPathExpander.ExpandedPath ep = expander.expand("departureTransportMeans.mode");
+
+// 1) emit guards
+        for (String g : ep.parentGuards()) {
+            emit(g + " != null,");
+        }
+
+// 2) emit binding
+        emit("$mode : " + ep.fullPath() + ",");
+
+
         // DSL LHS (human key). For now we keep it concrete (demo)
         String lhs = "- " + uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter
                 .friendlyPathNoDots(rule.fieldPath()) + " " +
