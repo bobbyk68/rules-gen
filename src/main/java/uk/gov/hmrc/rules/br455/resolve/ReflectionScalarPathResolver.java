@@ -4,6 +4,8 @@ package uk.gov.hmrc.rules.br455.resolve;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Set;
+
 @Slf4j
 public final class ReflectionScalarPathResolver {
 
@@ -14,6 +16,18 @@ public final class ReflectionScalarPathResolver {
         this.strict = (strict == null) ? new StrictResolutionStrategy() : strict;
         this.permissive = (permissive == null) ? new StrictResolutionStrategy() : permissive;
     }
+    // Version: 2026-01-25 (V2 resolver terminal-stop)
+
+    private static final Set<Class<?>> TERMINAL_TYPES = Set.of(
+            String.class,
+            Integer.class, Long.class, Double.class, Float.class, Short.class, Byte.class, Boolean.class,
+            java.math.BigDecimal.class,
+            java.time.LocalDate.class, java.time.LocalDateTime.class, java.time.Instant.class,
+            java.util.UUID.class
+    );
+
+
+
 
     /**
      * Two-pass:
@@ -59,9 +73,27 @@ public final class ReflectionScalarPathResolver {
             PropertyHit hit = findProperty(currentType, normalised);
             if (hit != null) {
                 resolvedSegments.add(hit.droolsPropertyName);
+                // --- ADD THIS ---
+                if (hit.terminal) {
+                    // If there are still segments left, that's the exact bug you're seeing
+                    if (i < parts.length - 1) {
+                        throw new IllegalStateException(
+                                "Path continues after terminal property '" + hit.droolsPropertyName
+                                        + "' type=" + (hit.nextType == null ? "null" : hit.nextType.getSimpleName())
+                                        + " remaining=" + java.util.Arrays.toString(java.util.Arrays.copyOfRange(parts, i + 1, parts.length))
+                        );
+                    }
+                    break;
+                }
                 currentType = hit.nextType;
                 continue;
             }
+
+    //            System.out.println("RESOLVE: current=" + current.getSimpleName()
+    //                    + " part[" + i + "]=" + rawParts.get(i)
+    //                    + " -> field=" + (field == null ? "NULL" : field.getName())
+    //                    + " type=" + (field == null ? "?" : field.getType().getSimpleName()));
+
 
             // Strategy kicks in only now (default failed)
             PropertyHit recovered = tryStrategyCandidates(currentType, original, strategy);
@@ -85,8 +117,7 @@ public final class ReflectionScalarPathResolver {
             }
 
             // Version: Resolver V2.1.0 (2026-01-24)
-// Ignore spreadsheet decorator tails like ".code" when reflection can't find them.
-// Example: ...nationality.code -> we stop at "...nationality".
+
             if ("code".equals(normalised) && !resolvedSegments.isEmpty()) {
                 return new PathResolution(String.join(".", resolvedSegments));
             }
@@ -152,7 +183,7 @@ public final class ReflectionScalarPathResolver {
         if (getter != null) {
             Class<?> returnType = getter.getReturnType();
             Class<?> next = unwrapCollectionElementType(getter.getGenericReturnType(), returnType);
-            return new PropertyHit(name, next);
+            return new PropertyHit(name, next, isTerminalType(next));
         }
 
         // 2) Field
@@ -160,7 +191,7 @@ public final class ReflectionScalarPathResolver {
         if (field != null) {
             Class<?> raw = field.getType();
             Class<?> next = unwrapCollectionElementType(field.getGenericType(), raw);
-            return new PropertyHit(field.getName(), next);
+            return new PropertyHit(field.getName(), next, isTerminalType(next));
         }
 
         // 3) Record component accessor
@@ -170,12 +201,35 @@ public final class ReflectionScalarPathResolver {
                 if (c.getName().equals(name)) {
                     Class<?> raw = c.getType();
                     Class<?> next = unwrapCollectionElementType(c.getGenericType(), raw);
-                    return new PropertyHit(c.getName(), next);
+                    return new PropertyHit(c.getName(), next, isTerminalType(next));
                 }
             }
         }
 
         return null;
+    }
+    // Version: 2026-01-25 (V2.1 terminal type check)
+    private static boolean isTerminalType(Class<?> type) {
+        if (type == null) return true;
+
+        if (type.isPrimitive()) return true;
+        if (type.isEnum()) return true;
+
+        return type == String.class
+                || type == Integer.class || type == Long.class || type == Double.class || type == Float.class
+                || type == Short.class || type == Byte.class || type == Boolean.class || type == Character.class
+                || type == java.math.BigDecimal.class
+                || type == java.util.UUID.class
+                || type == java.time.LocalDate.class
+                || type == java.time.LocalDateTime.class
+                || type == java.time.Instant.class;
+    }
+
+    private static boolean isTerminalTypes(Class<?> type) {
+        if (type.isPrimitive()) return true;
+        if (TERMINAL_TYPES.contains(type)) return true;
+        if (type.isEnum()) return true;
+        return false;
     }
 
     private java.lang.reflect.Method findGetter(Class<?> type, String name) {

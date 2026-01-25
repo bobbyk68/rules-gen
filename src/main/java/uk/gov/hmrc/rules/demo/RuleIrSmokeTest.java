@@ -15,6 +15,7 @@ public class RuleIrSmokeTest {
         RulePipelineRegistry registry = new RulePipelineRegistry();
 
         List<RuleRow> rows = Demo455SmokeRows.create();
+
         for (RuleRow row : rows) {
             registry.get(row.getRuleSet()).process(row);
             System.out.println();

@@ -23,6 +23,16 @@ public final class Br455Pipeline implements RulePipeline {
     private final DslEmitter dslEmitter;
     private final DslrEmitter dslrEmitter;
 
+    // Version: 2026-01-25
+    private final java.util.Set<String> whenLines = new java.util.LinkedHashSet<>();
+    private final java.util.Set<String> thenLines = new java.util.LinkedHashSet<>();
+    private final java.util.List<String> dslrRules = new java.util.ArrayList<>();
+
+    // pick a location that suits your project layout
+    private final java.nio.file.Path outputDir =
+            java.nio.file.Paths.get("src/main/resources/rules/br455");
+
+
     public Br455Pipeline() {
         this(
                 new Br455LogicExtractor(),
@@ -80,5 +90,67 @@ public final class Br455Pipeline implements RulePipeline {
         String dslrText = dslrEmitter.emitDslr(ruleSet, model);
         System.out.println("DSLR:\n" + dslrText);
     }
+
+    // Version: 2026-01-25
+    private void addDslLines(String dslText) {
+        if (dslText == null || dslText.isBlank()) {
+            return;
+        }
+        for (String raw : dslText.split("\\R")) {
+            String line = raw.trim();
+            if (line.isEmpty()) continue;
+            if (line.startsWith("#")) continue;
+
+            if (line.startsWith("[when]")) {
+                whenLines.add(line);
+            } else if (line.startsWith("[then]")) {
+                thenLines.add(line);
+            } else {
+                // Fail loudly so nothing silently disappears
+                throw new IllegalArgumentException("Unexpected DSL line (expected [when]/[then]): " + line);
+            }
+        }
+    }
+
+    // Version: 2026-01-25
+    public void finish() throws java.io.IOException {
+        java.nio.file.Path dslDir = outputDir.resolve("dsl");
+        java.nio.file.Path dslrDir = outputDir.resolve("dslr");
+
+        java.nio.file.Files.createDirectories(dslDir);
+        java.nio.file.Files.createDirectories(dslrDir);
+
+        java.util.List<String> whens = new java.util.ArrayList<>(whenLines);
+        java.util.List<String> thens = new java.util.ArrayList<>(thenLines);
+
+        java.util.Collections.sort(whens);
+        java.util.Collections.sort(thens);
+
+        writeText(dslDir.resolve("whens.dsl"),
+                "# Version: 2026-01-25\n" +
+                        "# Auto-generated - DO NOT EDIT\n\n" +
+                        String.join("\n", whens) + "\n");
+
+        writeText(dslDir.resolve("thens.dsl"),
+                "# Version: 2026-01-25\n" +
+                        "# Auto-generated - DO NOT EDIT\n\n" +
+                        String.join("\n", thens) + "\n");
+
+        writeText(dslrDir.resolve("rules.dslr"),
+                "// Version: 2026-01-25\n" +
+                        "// Auto-generated - DO NOT EDIT\n\n" +
+                        String.join("\n\n", dslrRules) + "\n");
+    }
+
+    private static void writeText(java.nio.file.Path file, String content) throws java.io.IOException {
+        java.nio.file.Files.writeString(
+                file,
+                content,
+                java.nio.charset.StandardCharsets.UTF_8,
+                java.nio.file.StandardOpenOption.CREATE,
+                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
+        );
+    }
+
 
 }
