@@ -79,13 +79,13 @@ public class JUnitTestMethodEmitter {
                 sb.append(step.childTypeSimpleName()).append(" ").append(childVar)
                   .append(" = new ").append(step.childTypeSimpleName()).append("();\n");
 
-                sb.append(currentVar).append(".").append(step.parentSetterName())
+                sb.append(currentVar).append(".").append(step.parentPropertyName())
                   .append("(").append(childVar).append(");\n\n");
 
                 currentVar = childVar;
             } else {
                 // Leaf: call the leaf setter on the currentVar
-                sb.append(currentVar).append(".").append(step.leafSetterName())
+                sb.append(currentVar).append(".").append(step.leafPropertyName())
                   .append("(").append(leafValueExpression).append(");\n");
             }
         }
@@ -93,27 +93,62 @@ public class JUnitTestMethodEmitter {
         return sb.toString().trim();
     }
 
-    // -------- model for steps --------
+    private String emitBuilderBuildBlock(
+            String rootTypeSimpleName,
+            java.util.List<SetterStep> steps,
+            String leafValueExpression,
+            String varName
+    ) {
+        // Build nested builder expression from leaf upwards
+        String expr = leafValueExpression;
 
-    public static SetterStep parent(String childTypeSimpleName, String parentSetterName) {
-        return new SetterStep(childTypeSimpleName, parentSetterName, null);
+        for (int i = steps.size() - 1; i >= 0; i--) {
+            SetterStep step = steps.get(i);
+
+            if (step.isLeaf()) {
+                // leaf handled by expr
+                continue;
+            }
+
+            expr =
+                    step.childTypeSimpleName() + ".of()\n" +
+                            "        ." + step.parentPropertyName() + "(\n" +
+                            "                " + expr + "\n" +
+                            "        )\n" +
+                            "        .build()";
+        }
+
+        return rootTypeSimpleName + " " + varName + " =\n" +
+                rootTypeSimpleName + ".of()\n" +
+                "        ." + steps.get(0).parentPropertyName() + "(\n" +
+                "                " + expr + "\n" +
+                "        )\n" +
+                "        .build();";
     }
 
-    public static SetterStep leaf(String leafSetterName) {
-        return new SetterStep(null, null, leafSetterName);
-    }
+
+
+
 
     public record SetterStep(
             String childTypeSimpleName,
-            String parentSetterName,
-            String leafSetterName
+            String parentPropertyName,   // e.g. "departureTransportMeans"
+            String leafPropertyName      // e.g. "modeCode"
     ) {
         boolean isLeaf() {
-            return leafSetterName != null && !leafSetterName.isBlank();
+            return leafPropertyName != null && !leafPropertyName.isBlank();
         }
     }
 
     // -------- helpers --------
+
+    public static SetterStep parent(String childType, String property) {
+        return new SetterStep(childType, property, null);
+    }
+
+    public static SetterStep leaf(String property) {
+        return new SetterStep(null, null, property);
+    }
 
     private String toTestMethodName(String ruleName) {
         if (ruleName == null) return "testBR455_UNKNOWN";
