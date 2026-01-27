@@ -89,6 +89,90 @@ public final class Br455Pipeline implements RulePipeline {
 
         String dslrText = dslrEmitter.emitDslr(ruleSet, model);
         System.out.println("DSLR:\n" + dslrText);
+
+        System.out.println();
+        System.out.println("=== GENERATED JUNIT TEST METHOD (COPY / PASTE) ===");
+
+        JUnitTestMethodEmitter emitter = new JUnitTestMethodEmitter();
+
+// Hardcoded demo inputs (ONE golden rule)
+        String rootType = "ConsignmentShipmentFact";
+        String listName = "AllowedModeCodes";
+        java.util.List<String> listValues = java.util.List.of("A", "D");
+
+// Hardcoded build steps for ONE known path
+        java.util.List<JUnitTestMethodEmitter.SetterStep> steps = java.util.List.of(
+                JUnitTestMethodEmitter.parent("DepartureTransportMeans", "setDepartureTransportMeans"),
+                JUnitTestMethodEmitter.parent("Departure", "setDeparture"),
+                JUnitTestMethodEmitter.leaf("setModeCode")
+        );
+
+        String junit =
+                emitter.emitPasteReadyJUnit5TestMethod(
+                        row.id(),        // uses the real rule id
+                        logic.ifText(),  // uses the real excel IF
+                        listName,
+                        listValues,
+                        rootType,
+                        steps
+                );
+
+        System.out.println(junit);
+        System.out.println("=== END GENERATED JUNIT TEST METHOD ===");
+        System.out.println();
+
+
+
+
+
+
+
+
+
+
+
+
+        System.out.println();
+        System.out.println("=== GENERATED JUNIT TEST METHOD (COPY / PASTE) ===");
+
+        JUnitTestMethodEmitter emitter = new JUnitTestMethodEmitter();
+
+// Demo list (replace with your real listName/listValues if you have them in scope)
+        String listName = "DemoList";
+        java.util.List<String> listValues = java.util.List.of("A", "D");
+
+// Root fact type (simple name) for the generated method
+        String rootType = "ConsignmentShipmentFact"; // <-- change to your BR455 root fact simple name
+
+// Steps: parents then leaf setter.
+// Example path: departureTransportMeans.departure.modeCode
+        java.util.List<JUnitTestMethodEmitter.SetterStep> steps = java.util.List.of(
+                JUnitTestMethodEmitter.parent("DepartureTransportMeans", "setDepartureTransportMeans"),
+                JUnitTestMethodEmitter.parent("Departure", "setDeparture"),
+                JUnitTestMethodEmitter.leaf("setModeCode")
+        );
+
+        String junit =
+                emitter.emitPasteReadyJUnit5TestMethod(
+                        row.id(),
+                        logic.ifText(),
+                        listName,
+                        listValues,
+                        rootType,
+                        steps
+                );
+
+        System.out.println(junit);
+        System.out.println("=== END GENERATED JUNIT TEST METHOD ===");
+        System.out.println();
+
+
+
+
+
+
+
+
     }
 
     // Version: 2026-01-25
