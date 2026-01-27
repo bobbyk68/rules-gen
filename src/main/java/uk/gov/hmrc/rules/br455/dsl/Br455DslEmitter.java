@@ -32,33 +32,31 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
     }
 
     @Override
-    @Override
     public java.util.List<DslEntry> emitWhen(RuleModel model) {
 
         String ifCondition = model.parsed().ifText();
         Br455ListRule rule = parser.parse(ifCondition);
 
-        // Resolve the Excel-ish fieldPath into:
-        // - fact (alias + class)
-        // - propertyPath (typically without the root)
+        // Resolver still used for alias + fact type
         uk.gov.hmrc.rules.br455.registry.Resolved r = registry.resolve(rule.fieldPath());
 
-        // Expand dotted path into parent guards we can turn into individual "- with X provided" lines
+        // Canonical dotted path for *both* DSL + DSLR shape/text.
+        // This is the critical change.
+        String canonicalPath = stripRoot(rule.fieldPath()); // e.g. "borderTransportMeans.nationality.code"
+
+        // Expand the canonical path to generate 1 DSL line per guard (BR675 style)
         DottedPathExpander expander = new DottedPathExpander();
-        DottedPathExpander.ExpandedPath ep = expander.expand(r.propertyPath());
+        DottedPathExpander.ExpandedPath ep = expander.expand(canonicalPath);
 
         java.util.List<DslEntry> out = new java.util.ArrayList<>();
 
         // ---------------------------
         // 1) Headline: "<Root> exists"
         // ---------------------------
-        String rootKey = rootKey(rule.fieldPath());                 // e.g. "ConsignmentShipment"
-        String rootVar = lowerCamel(rootKey);                       // e.g. "consignmentShipment"
+        String rootKey = rootKey(rule.fieldPath());     // e.g. "ConsignmentShipment"
+        String rootVar = lowerCamel(rootKey);           // e.g. "consignmentShipment"
 
-        // LHS must match a line in the BR675-style DSL: "Consignment shipment exists"
         String headlineLhs = headlineExistsLhs(rootKey);
-
-        // RHS matches BR675: "$cons : ConsignmentShipmentFact( consignmentShipment != null )"
         String headlineRhs = r.alias() + " : " + r.factClassSimpleName() + "( " + rootVar + " != null )";
 
         DslKey headlineKey = new DslKey(
@@ -67,26 +65,17 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
                 "SINGLE",
                 rootKey,
                 rootKey,
-                stripRoot(rule.fieldPath()),
+                canonicalPath,
                 "EXISTS"
         );
 
         out.add(new DslEntry(headlineKey, "condition", headlineLhs, headlineRhs));
 
-        // -------------------------------------------------------
-        // 2) Dash lines: one per guard => "- with X provided"
-        //    IMPORTANT:
-        //    - we do NOT comma-join these anymore
-        //    - each becomes its own DSL line (like BR675)
-        // -------------------------------------------------------
+        // -----------------------------------------
+        // 2) One "- with ... provided" per parent
+        //    (this is where your missing DSL line was)
+        // -----------------------------------------
         for (String g : ep.parentGuards()) {
-            // Example g values you were previously turning into "g != null,":
-            // "exportationCountry"
-            // "exportationCountry.country"
-            //
-            // For DSL, each becomes:
-            // LHS: "- with exportation country provided"
-            // RHS: "exportationCountry != null"
             String dashLhs = dashProvidedLhs(friendlyWordsFromDottedPath(g));
             String dashRhs = g + " != null";
 
@@ -104,19 +93,16 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         }
 
         // -------------------------------------------------------
-        // 3) Final dash: "- with <leaf> must (not) exist in list <ListName>"
-        //    Using BR675 pattern with isValidCode(...)
+        // 3) Final dash: "... code must exist in list ImportCountries"
+        //    LHS uses canonicalPath so "code" appears when present.
         // -------------------------------------------------------
-        String leafPathForHuman = r.propertyPath();                 // used only for words
-        String leafPathForCode = stripTrailingDotCode(r.propertyPath()); // used for isValidCode arg
-
         String finalDashLhs = dashListMembershipLhs(
-                friendlyWordsFromDottedPath(leafPathForHuman),
+                friendlyWordsFromDottedPath(canonicalPath),
                 rule.mode(),
                 rule.listName()
         );
 
-        String isValid = "isValidCode(" + leafPathForCode + ", CodeListType.{value}, asOf, codeListLookup)";
+        String isValid = "isValidCode(" + stripTrailingDotCode(canonicalPath) + ", CodeListType.{value}, asOf, codeListLookup)";
         String finalDashRhs = (rule.mode() == Br455ListRule.Mode.MUST_NOT_EXIST_IN_LIST)
                 ? "!" + isValid
                 : isValid;
@@ -127,7 +113,7 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
                 "SINGLE",
                 rootKey,
                 rootKey,
-                leafPathForCode,
+                canonicalPath,
                 (rule.mode() == Br455ListRule.Mode.MUST_NOT_EXIST_IN_LIST) ? "NOT_IN_LIST" : "IN_LIST"
         );
 
@@ -141,6 +127,7 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         String t = s.trim();
         return t.endsWith(".code") ? t.substring(0, t.length() - ".code".length()) : t;
     }
+
 
     private static String lowerCamel(String s) {
         if (s == null || s.isBlank()) return s;
