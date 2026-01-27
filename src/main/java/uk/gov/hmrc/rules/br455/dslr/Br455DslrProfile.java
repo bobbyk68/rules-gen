@@ -73,20 +73,42 @@ public final class Br455DslrProfile {
         // This line should read like: "- with departure transport means identification type exist in list Deferred"
         lines.add(buildFinalDashLine(rule));
 
+
         return lines;
     }
 
-    // =========================
-    // NEW METHOD: buildFinalDashLine
-    // =========================
+    // Version: 2026-01-27
     private String buildFinalDashLine(Br455ListRule rule) {
+
+        String leafLabel = humaniseLeaf(rule.fieldPath());
+
         return switch (rule.mode()) {
             case MUST_EXIST_IN_LIST ->
-                    Br455DslrPhrasebook.dashMustExist(rule.fieldPath(), rule.listName());
+                    "- with " + leafLabel + " must exist in list " + rule.listName();
             case MUST_NOT_EXIST_IN_LIST ->
-                    Br455DslrPhrasebook.dashMustNotExist(rule.fieldPath(), rule.listName());
+                    "- with " + leafLabel + " must not exist in list " + rule.listName();
         };
     }
+
+    private String humaniseLeaf(String fieldPath) {
+        if (fieldPath == null || fieldPath.isBlank()) {
+            return "value";
+        }
+
+        String[] parts = fieldPath.split("\\.");
+        if (parts.length < 2) {
+            return toLowerCaseWords(parts[0]);
+        }
+
+        // everything after the root, including the leaf
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i < parts.length; i++) {
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(toLowerCaseWords(parts[i]));
+        }
+        return sb.toString();
+    }
+
 
     // =========================
     // NEW METHOD: buildChainLabel
