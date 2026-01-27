@@ -32,116 +32,168 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
     }
 
     @Override
-    public List<DslEntry> emitWhen(RuleModel model) {
+    @Override
+    public java.util.List<DslEntry> emitWhen(RuleModel model) {
 
         String ifCondition = model.parsed().ifText();
         Br455ListRule rule = parser.parse(ifCondition);
 
+        // Resolve the Excel-ish fieldPath into:
+        // - fact (alias + class)
+        // - propertyPath (typically without the root)
         uk.gov.hmrc.rules.br455.registry.Resolved r = registry.resolve(rule.fieldPath());
-        String friendly = r.friendlyVar();
 
+        // Expand dotted path into parent guards we can turn into individual "- with X provided" lines
         DottedPathExpander expander = new DottedPathExpander();
         DottedPathExpander.ExpandedPath ep = expander.expand(r.propertyPath());
 
-        // ------------------------------------------------------------
-        // Build the FINAL leaf RHS exactly as you do today (unchanged)
-        // ------------------------------------------------------------
-        String guards = "";
-        for (String g : ep.parentGuards()) {
-            guards += (g + " != null,");
-        }
+        java.util.List<DslEntry> out = new java.util.ArrayList<>();
 
-        String bindTemplate = """
-        %s : %s( %s %s : %s,
-        %s != null && %s.trim().length() > 0 )
-        $ref : RefDataSetFact( name == "{value}", $vals : values )
-        $norm : String() from ( %s.trim() )
-        """;
+        // ---------------------------
+        // 1) Headline: "<Root> exists"
+        // ---------------------------
+        String rootKey = rootKey(rule.fieldPath());                 // e.g. "ConsignmentShipment"
+        String rootVar = lowerCamel(rootKey);                       // e.g. "consignmentShipment"
 
-        String bind = String.format(
-                bindTemplate,
-                r.alias(),
-                r.factClassSimpleName(),
-                guards,
-                friendly,
-                r.propertyPath(),
-                friendly,
-                friendly,
-                friendly
-        );
+        // LHS must match a line in the BR675-style DSL: "Consignment shipment exists"
+        String headlineLhs = headlineExistsLhs(rootKey);
 
-        String listMembership = "String(this == $norm ) from $vals";
-
-        String violation = (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST)
-                ? "not (" + listMembership + ")"
-                : listMembership;
-
-        String leafRhs = bind + violation;
-
-        // ------------------------------------------------------------
-        // Emit BR675-style multi-line WHEN as multiple DSL entries
-        // ------------------------------------------------------------
-        List<DslEntry> out = new java.util.ArrayList<>();
-
-        String root = rootKey(rule.fieldPath()); // e.g. ConsignmentShipment / Declaration / GoodsItem
-
-        // A) Headline
-        String headlineLhs = headlineForRoot(root);
-        String headlineRhs = headlineRhsForRoot(root);
+        // RHS matches BR675: "$cons : ConsignmentShipmentFact( consignmentShipment != null )"
+        String headlineRhs = r.alias() + " : " + r.factClassSimpleName() + "( " + rootVar + " != null )";
 
         DslKey headlineKey = new DslKey(
                 "BR455",
                 "condition",
                 "SINGLE",
-                root,
-                root,
+                rootKey,
+                rootKey,
                 stripRoot(rule.fieldPath()),
-                "HEADLINE"
+                "EXISTS"
         );
+
         out.add(new DslEntry(headlineKey, "condition", headlineLhs, headlineRhs));
 
-        // B) Parent "provided" lines
+        // -------------------------------------------------------
+        // 2) Dash lines: one per guard => "- with X provided"
+        //    IMPORTANT:
+        //    - we do NOT comma-join these anymore
+        //    - each becomes its own DSL line (like BR675)
+        // -------------------------------------------------------
         for (String g : ep.parentGuards()) {
+            // Example g values you were previously turning into "g != null,":
+            // "exportationCountry"
+            // "exportationCountry.country"
+            //
+            // For DSL, each becomes:
+            // LHS: "- with exportation country provided"
+            // RHS: "exportationCountry != null"
+            String dashLhs = dashProvidedLhs(friendlyWordsFromDottedPath(g));
+            String dashRhs = g + " != null";
 
-            String providedLhs = "- with " + humaniseForDslr(g) + " provided";
-            String providedRhs = buildNullGuards(g);
-
-            DslKey providedKey = new DslKey(
+            DslKey dashKey = new DslKey(
                     "BR455",
                     "condition",
                     "SINGLE",
-                    root,
-                    root,
+                    rootKey,
+                    rootKey,
                     g,
                     "PROVIDED"
             );
 
-            out.add(new DslEntry(providedKey, "condition", providedLhs, providedRhs));
+            out.add(new DslEntry(dashKey, "condition", dashLhs, dashRhs));
         }
 
-        // C) Final leaf list line (uses your existing DRL)
-        String leafWords =
-                uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter.friendlyPathNoDots(rule.fieldPath());
+        // -------------------------------------------------------
+        // 3) Final dash: "- with <leaf> must (not) exist in list <ListName>"
+        //    Using BR675 pattern with isValidCode(...)
+        // -------------------------------------------------------
+        String leafPathForHuman = r.propertyPath();                 // used only for words
+        String leafPathForCode = stripTrailingDotCode(r.propertyPath()); // used for isValidCode arg
 
-        String leafLhs = "- with " + leafWords + " " + (
-                rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST
-                        ? "must exist in list {value}"
-                        : "must not exist in list {value}"
+        String finalDashLhs = dashListMembershipLhs(
+                friendlyWordsFromDottedPath(leafPathForHuman),
+                rule.mode(),
+                rule.listName()
         );
 
-        DslKey leafKey = new DslKey(
+        String isValid = "isValidCode(" + leafPathForCode + ", CodeListType.{value}, asOf, codeListLookup)";
+        String finalDashRhs = (rule.mode() == Br455ListRule.Mode.MUST_NOT_EXIST_IN_LIST)
+                ? "!" + isValid
+                : isValid;
+
+        DslKey finalKey = new DslKey(
                 "BR455",
                 "condition",
                 "SINGLE",
-                root,
-                root,
-                stripRoot(rule.fieldPath()),
-                rule.mode().name()
+                rootKey,
+                rootKey,
+                leafPathForCode,
+                (rule.mode() == Br455ListRule.Mode.MUST_NOT_EXIST_IN_LIST) ? "NOT_IN_LIST" : "IN_LIST"
         );
 
-        out.add(new DslEntry(leafKey, "condition", leafLhs, leafRhs));
+        out.add(new DslEntry(finalKey, "condition", finalDashLhs, finalDashRhs));
 
         return out;
+    }
+
+    private static String stripTrailingDotCode(String s) {
+        if (s == null) return "";
+        String t = s.trim();
+        return t.endsWith(".code") ? t.substring(0, t.length() - ".code".length()) : t;
+    }
+
+    private static String lowerCamel(String s) {
+        if (s == null || s.isBlank()) return s;
+        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+    }
+
+    /**
+     * Produces "Consignment shipment exists" (headline).
+     * RootKey comes in as PascalCase ("ConsignmentShipment").
+     */
+    private static String headlineExistsLhs(String rootKey) {
+        return splitPascalWords(rootKey).toLowerCase() + " exists";
+    }
+
+    /**
+     * Produces "- with exportation country provided"
+     */
+    private static String dashProvidedLhs(String words) {
+        return "- with " + words + " provided";
+    }
+
+    /**
+     * Produces "- with exportation country country code must exist in list ImportCountries"
+     * or "... must not exist ..."
+     */
+    private static String dashListMembershipLhs(String words, Br455ListRule.Mode mode, String listName) {
+        String verb = (mode == Br455ListRule.Mode.MUST_NOT_EXIST_IN_LIST) ? "must not exist" : "must exist";
+        return "- with " + words + " " + verb + " in list " + listName;
+    }
+
+    /**
+     * Turns "exportationCountry.country.code" into "exportation country country code"
+     * (yes: duplicates can happen; BR675 has them too).
+     */
+    private static String friendlyWordsFromDottedPath(String dotted) {
+        if (dotted == null || dotted.isBlank()) return "";
+        String[] parts = dotted.split("\\.");
+        java.util.List<String> words = new java.util.ArrayList<>();
+        for (String p : parts) {
+            if (p == null || p.isBlank()) continue;
+            words.add(splitCamelWords(p).toLowerCase());
+        }
+        return String.join(" ", words);
+    }
+
+    private static String splitCamelWords(String s) {
+        // "exportationCountry" -> "exportation Country"
+        return s.replaceAll("([a-z])([A-Z])", "$1 $2");
+    }
+
+    private static String splitPascalWords(String s) {
+        // "ConsignmentShipment" -> "Consignment Shipment"
+        return s.replaceAll("([a-z])([A-Z])", "$1 $2");
     }
 
     // Version: 2026-01-27
