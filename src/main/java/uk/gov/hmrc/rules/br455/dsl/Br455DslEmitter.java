@@ -32,8 +32,6 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
     }
 
     @Override
-    // Version: 2026-01-27
-    @Override
     public List<DslEntry> emitWhen(RuleModel model) {
 
         String ifCondition = model.parsed().ifText();
@@ -45,140 +43,136 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         DottedPathExpander expander = new DottedPathExpander();
         DottedPathExpander.ExpandedPath ep = expander.expand(r.propertyPath());
 
-        List<DslEntry> out = new java.util.ArrayList<>();
-
         // ------------------------------------------------------------
-        // 1) HEADLINE (no dash in DSLR)
-        // LHS must match the DSLR headline exactly (constructor string).
+        // Build the FINAL leaf RHS exactly as you do today (unchanged)
         // ------------------------------------------------------------
-        {
-            String lhs = "Consignment shipment exists";
-
-            // Keep RHS simple and consistent with your DSL style:
-            // a single guard that makes the root exist.
-            // NOTE: adjust this if your actual bound variable / fact differs.
-            // If you already bind $cons elsewhere, use that pattern instead.
-            String rhs = "$cons : ConsignmentShipmentFact( consignmentShipment != null )";
-
-            DslKey key = new DslKey(
-                    "BR455",
-                    "condition",
-                    "SINGLE",
-                    rootKey(rule.fieldPath()),
-                    rootKey(rule.fieldPath()),
-                    "ConsignmentShipment", // fieldName-ish for uniqueness
-                    "HEADLINE"
-            );
-
-            out.add(new DslEntry(key, "condition", lhs, rhs));
+        String guards = "";
+        for (String g : ep.parentGuards()) {
+            guards += (g + " != null,");
         }
 
+        String bindTemplate = """
+        %s : %s( %s %s : %s,
+        %s != null && %s.trim().length() > 0 )
+        $ref : RefDataSetFact( name == "{value}", $vals : values )
+        $norm : String() from ( %s.trim() )
+        """;
+
+        String bind = String.format(
+                bindTemplate,
+                r.alias(),
+                r.factClassSimpleName(),
+                guards,
+                friendly,
+                r.propertyPath(),
+                friendly,
+                friendly,
+                friendly
+        );
+
+        String listMembership = "String(this == $norm ) from $vals";
+
+        String violation = (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST)
+                ? "not (" + listMembership + ")"
+                : listMembership;
+
+        String leafRhs = bind + violation;
+
         // ------------------------------------------------------------
-        // 2) PROVIDED lines (dashed in DSLR): one per parent guard
-        // ep.parentGuards() are things like:
-        //   departureTransportMeans
-        //   departureTransportMeans.mode
-        // etc
+        // Emit BR675-style multi-line WHEN as multiple DSL entries
         // ------------------------------------------------------------
+        List<DslEntry> out = new java.util.ArrayList<>();
+
+        String root = rootKey(rule.fieldPath()); // e.g. ConsignmentShipment / Declaration / GoodsItem
+
+        // A) Headline
+        String headlineLhs = headlineForRoot(root);
+        String headlineRhs = headlineRhsForRoot(root);
+
+        DslKey headlineKey = new DslKey(
+                "BR455",
+                "condition",
+                "SINGLE",
+                root,
+                root,
+                stripRoot(rule.fieldPath()),
+                "HEADLINE"
+        );
+        out.add(new DslEntry(headlineKey, "condition", headlineLhs, headlineRhs));
+
+        // B) Parent "provided" lines
         for (String g : ep.parentGuards()) {
 
-            // DSLR line (must exactly match what Br455DslrProfile emits)
-            String lhs = "- with " + humaniseForDslr(g) + " provided";
+            String providedLhs = "- with " + humaniseForDslr(g) + " provided";
+            String providedRhs = buildNullGuards(g);
 
-            // RHS guards for this parent
-            // Example:
-            //   departureTransportMeans != null
-            // or for a deep guard, we can include all segments up to it.
-            String rhs = buildNullGuards(g);
-
-            DslKey key = new DslKey(
+            DslKey providedKey = new DslKey(
                     "BR455",
                     "condition",
                     "SINGLE",
-                    rootKey(rule.fieldPath()),
-                    rootKey(rule.fieldPath()),
-                    g,                 // fieldName: parent guard path
+                    root,
+                    root,
+                    g,
                     "PROVIDED"
             );
 
-            out.add(new DslEntry(key, "condition", lhs, rhs));
+            out.add(new DslEntry(providedKey, "condition", providedLhs, providedRhs));
         }
 
-        // ------------------------------------------------------------
-        // 3) FINAL LIST predicate (dashed in DSLR)
-        // Keep your existing bind+membership+violation approach.
-        // LHS must match DSLR final line text and use {list} placeholder.
-        // ------------------------------------------------------------
-        {
-            // Reuse your existing bind / violation logic as-is
-            String guards = "";
-            for (String g : ep.parentGuards()) {
-                guards += (g + " != null,");
-            }
+        // C) Final leaf list line (uses your existing DRL)
+        String leafWords =
+                uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter.friendlyPathNoDots(rule.fieldPath());
 
-            String bindTemplate = """
-            %s : %s( %s %s : %s,
-            %s != null && %s.trim().length() > 0 )
-            $ref : RefDataSetFact( name == "{list}", $vals : values )
-            $norm : String() from ( %s.trim() )
-            """;
+        String leafLhs = "- with " + leafWords + " " + (
+                rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST
+                        ? "must exist in list {value}"
+                        : "must not exist in list {value}"
+        );
 
-            String bind = String.format(
-                    bindTemplate,
-                    r.alias(),
-                    r.factClassSimpleName(),
-                    guards,
-                    friendly,
-                    r.propertyPath(),
-                    friendly,
-                    friendly,
-                    friendly,
-                    friendly
-            );
+        DslKey leafKey = new DslKey(
+                "BR455",
+                "condition",
+                "SINGLE",
+                root,
+                root,
+                stripRoot(rule.fieldPath()),
+                rule.mode().name()
+        );
 
-            String listMembership = "String(this == $norm ) from $vals";
-
-            String violation = (rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST)
-                    ? "not (" + listMembership + ")"
-                    : listMembership;
-
-            String rhs = bind + violation;
-
-            // DSLR final line: "- with <leaf words> must exist in list {list}"
-            // IMPORTANT: keep "{list}" placeholder in the sentence.
-            String leafWords = uk.gov.hmrc.rules.br455.format.Br455ThenMessageFormatter
-                    .friendlyPathNoDots(rule.fieldPath());
-
-            String lhs = "- with " + leafWords + " " + (
-                    rule.mode() == Br455ListRule.Mode.MUST_EXIST_IN_LIST
-                            ? "must exist in list {list}"
-                            : "must not exist in list {list}"
-            );
-
-            DslKey key = new DslKey(
-                    "BR455",
-                    "condition",
-                    "SINGLE",
-                    rootKey(rule.fieldPath()),
-                    rootKey(rule.fieldPath()),
-                    stripRoot(rule.fieldPath()),
-                    rule.mode().name()
-            );
-
-            out.add(new DslEntry(key, "condition", lhs, rhs));
-        }
+        out.add(new DslEntry(leafKey, "condition", leafLhs, leafRhs));
 
         return out;
     }
 
     // Version: 2026-01-27
+    private static String headlineForRoot(String rootKey) {
+        if (rootKey == null || rootKey.isBlank()) return "Object exists";
+
+        String spaced = rootKey
+                .replaceAll("([a-z0-9])([A-Z])", "$1 $2")
+                .trim()
+                .toLowerCase(java.util.Locale.ROOT);
+
+        String pretty = Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
+        return pretty + " exists";
+    }
+
+    // Version: 2026-01-27
+    private static String humaniseForDslr(String dottedPath) {
+        if (dottedPath == null || dottedPath.isBlank()) return "";
+        return dottedPath
+                .replace(".", " ")
+                .replaceAll("([a-z0-9])([A-Z])", "$1 $2")
+                .trim()
+                .toLowerCase(java.util.Locale.ROOT);
+    }
+
+    // Version: 2026-01-27
     private static String buildNullGuards(String dottedPath) {
         if (dottedPath == null || dottedPath.isBlank()) return "";
-
         String[] parts = dottedPath.split("\\.");
         StringBuilder sb = new StringBuilder();
         String current = "";
-
         for (int i = 0; i < parts.length; i++) {
             current = (i == 0) ? parts[i] : current + "." + parts[i];
             if (sb.length() > 0) sb.append(", ");
@@ -188,14 +182,19 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
     }
 
     // Version: 2026-01-27
-    private static String humaniseForDslr(String dottedPath) {
-        if (dottedPath == null || dottedPath.isBlank()) return "";
-        // "departureTransportMeans.mode" -> "departure transport means mode"
-        String spaced = dottedPath
-                .replace(".", " ")
-                .replaceAll("([a-z0-9])([A-Z])", "$1 $2")
-                .trim();
-        return spaced.toLowerCase(java.util.Locale.ROOT);
+    private static String headlineRhsForRoot(String rootKey) {
+        // KEEP THIS ALIGNED WITH BR675'S ROOT BINDINGS.
+        // These are safe placeholders until you swap them to your real fact patterns.
+        if ("ConsignmentShipment".equals(rootKey)) {
+            return "$cons : ConsignmentShipmentFact( consignmentShipment != null )";
+        }
+        if ("Declaration".equals(rootKey)) {
+            return "$dec : DeclarationFact( declaration != null )";
+        }
+        if ("GoodsItem".equals(rootKey)) {
+            return "$gi : GoodsItemFact( goodsItem != null )";
+        }
+        return "true";
     }
 
 
