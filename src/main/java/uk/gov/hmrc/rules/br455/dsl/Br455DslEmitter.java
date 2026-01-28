@@ -38,7 +38,7 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         Br455ListRule rule = parser.parse(ifCondition);
 
         // Resolver still used for alias + fact type
-        uk.gov.hmrc.rules.br455.registry.Resolved r = registry.resolve(rule.fieldPath());
+       Resolved r = registry.resolve(rule.fieldPath());
 
         // Canonical dotted path for *both* DSL + DSLR shape/text.
         // This is the critical change.
@@ -50,26 +50,27 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
 
         java.util.List<DslEntry> out = new java.util.ArrayList<>();
 
-        // ---------------------------
-        // 1) Headline: "<Root> exists"
-        // ---------------------------
-        String rootKey = rootKey(rule.fieldPath());     // e.g. "ConsignmentShipment"
-        String rootVar = lowerCamel(rootKey);           // e.g. "consignmentShipment"
+// ---------------------------
+// 1) Headline: "<Resolved fact> exists"
+// ---------------------------
+        String anchorRoot = rootKey(rule.fieldPath()); // keep for grouping/keys
+        String rootVar = rootVarForDefaultRoot(anchorRoot); // <- key change
 
-        String headlineLhs = headlineExistsLhs(rootKey);
+        String headlineLhs = headlineExistsFromFactSimpleName(r.factClassSimpleName());
         String headlineRhs = r.alias() + " : " + r.factClassSimpleName() + "( " + rootVar + " != null )";
 
         DslKey headlineKey = new DslKey(
                 "BR455",
                 "condition",
                 "SINGLE",
-                rootKey,
-                rootKey,
+                anchorRoot,
+                anchorRoot,
                 canonicalPath,
                 "EXISTS"
         );
 
         out.add(new DslEntry(headlineKey, "condition", headlineLhs, headlineRhs));
+
 
         // -----------------------------------------
         // 2) One "- with ... provided" per parent
@@ -121,6 +122,41 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
 
         return out;
     }
+
+    // Version: 2026-01-27
+    private static String headlineExistsFromFactSimpleName(String factSimpleName) {
+        if (factSimpleName == null || factSimpleName.isBlank()) return "Object exists";
+
+        String base = factSimpleName.endsWith("Fact")
+                ? factSimpleName.substring(0, factSimpleName.length() - "Fact".length())
+                : factSimpleName;
+
+        String spaced = base
+                .replaceAll("([a-z0-9])([A-Z])", "$1 $2")
+                .trim()
+                .toLowerCase(java.util.Locale.ROOT);
+
+        return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1) + " exists";
+    }
+
+
+    // Version: 2026-01-27
+    private static String rootVarForDefaultRoot(String rootKey) {
+        if ("ConsignmentShipment".equals(rootKey)) return "consignmentShipment";
+        if ("Declaration".equals(rootKey)) return "declaration";
+        if ("GoodsItem".equals(rootKey)) return "goodsItem";
+        // safe fallback; better to fail loudly if you ever add a 4th default
+        return lowerCamel(rootKey);
+    }
+
+    // Version: 2026-01-27
+    private static String inferDefaultRootKeyFromFact(String factSimpleName) {
+        // Adjust prefixes to your actual fact families if needed
+        if (factSimpleName.contains("Declaration")) return "Declaration";
+        if (factSimpleName.contains("GoodsItem")) return "GoodsItem";
+        return "ConsignmentShipment";
+    }
+
 
     private static String stripTrailingDotCode(String s) {
         if (s == null) return "";
