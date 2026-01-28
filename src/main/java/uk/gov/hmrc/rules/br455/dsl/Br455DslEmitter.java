@@ -123,13 +123,16 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
         return out;
     }
 
-    // Version: 2026-01-27
+
+
     private static String headlineExistsFromFactSimpleName(String factSimpleName) {
         if (factSimpleName == null || factSimpleName.isBlank()) return "Object exists";
 
         String base = factSimpleName.endsWith("Fact")
                 ? factSimpleName.substring(0, factSimpleName.length() - "Fact".length())
                 : factSimpleName;
+
+        base = normaliseSpecialisedFactName(base);
 
         String spaced = base
                 .replaceAll("([a-z0-9])([A-Z])", "$1 $2")
@@ -138,6 +141,29 @@ public final class Br455DslEmitter implements RuleSetDslEmitter {
 
         return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1) + " exists";
     }
+
+    private static String normaliseSpecialisedFactName(String base) {
+        String[] roots = {"GoodsItem", "Declaration", "ConsignmentShipment"};
+
+        for (String root : roots) {
+            if (!base.startsWith(root)) continue;
+
+            String tail = base.substring(root.length());
+
+            // Exactly one of the big 3 → no "with"
+            if (tail.isEmpty()) return base;
+
+            // Specialised fact → ensure it becomes "<Root>With<Tail>"
+            // If Tail already starts with "With", keep it. Otherwise inject it.
+            if (tail.startsWith("With")) return base;
+
+            return root + "With" + tail;
+        }
+
+        // Unknown root → leave as-is
+        return base;
+    }
+
 
 
     // Version: 2026-01-27
