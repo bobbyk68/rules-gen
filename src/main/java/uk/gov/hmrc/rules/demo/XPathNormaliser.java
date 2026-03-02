@@ -1,29 +1,35 @@
 package uk.gov.hmrc.rules.demo;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * Responsible for normalising an XPath string into a deduplication key.
+ * Responsible for normalising an XPath string into a deduplication key,
+ * and extracting sequence numbers from the tail for sorting purposes.
  *
  * The normalised key:
  * - Preserves the goodsItems segment intact (including its sequenceNumber) as the grouping key
  * - Strips sequenceNumber values from all segments after goodsItems
- * - Applies map-driven normalisation to other predicate attributes via PredicateParser
+ * - Applies NormalisationConfig-driven normalisation to other predicate attributes
  *
  * e.g.
  * /declaration/consignmentShipment/goodsItems[sequenceNumber="1"]/parties[partyRoleType="LC" and sequenceNumber="2"]/partyIdentification
  * ->
  * /declaration/consignmentShipment/goodsItems[sequenceNumber="1"]/parties[partyRoleType="LC" and sequenceNumber]/partyIdentification
  *
- * @version 0.1.0-SNAPSHOT
+ * @version 0.2.0-SNAPSHOT
  * @since 2026-02-27
  */
 class XPathNormaliser {
 
+    private static final Pattern SEQUENCE_NUMBER_VALUE = Pattern.compile("sequenceNumber=\"(\\d+)\"");
+
     private final PredicateParser predicateParser;
 
-    XPathNormaliser(Map<String, Boolean> normalisePredicateValues) {
-        this.predicateParser = new PredicateParser(normalisePredicateValues);
+    XPathNormaliser(NormalisationConfig config) {
+        this.predicateParser = new PredicateParser(config);
     }
 
     /**
@@ -40,28 +46,52 @@ class XPathNormaliser {
                 key.append("/");
                 continue;
             }
-
             if (segment.startsWith("goodsItems")) {
-                // Keep goodsItems segment intact - it is the grouping key
                 key.append(segment);
                 pastGoodsItems = true;
             } else if (pastGoodsItems) {
-                // Normalise everything after goodsItems
                 key.append(normaliseSegment(segment));
             } else {
-                // Before goodsItems - keep as-is (e.g. declaration, consignmentShipment)
                 key.append(segment);
             }
-
             key.append("/");
         }
 
-        // Remove trailing slash
         if (key.length() > 0 && key.charAt(key.length() - 1) == '/') {
             key.deleteCharAt(key.length() - 1);
         }
 
         return key.toString();
+    }
+
+    /**
+     * Extracts all sequenceNumber values from the tail of the xpath (after goodsItems).
+     * Used by LowestSequenceNumberStrategy to sort candidates.
+     * Uses regex for extraction as we only need the values, not to manipulate the string.
+     *
+     * e.g. goodsItems[sequenceNumber="1"]/parties[partyRoleType="LC" and sequenceNumber="3"]/partyIdentification
+     *   -> [3]
+     *
+     * @param xpath the raw xpath string
+     * @return ordered list of sequence number integers from the tail
+     */
+    List<Integer> extractSequenceNumbers(String xpath) {
+        List<Integer> sequenceNumbers = new ArrayList<>();
+
+        // Find the goodsItems boundary first - only extract from tail
+        int goodsItemsEnd = xpath.indexOf(']', xpath.indexOf("goodsItems["));
+        if (goodsItemsEnd == -1) {
+            return sequenceNumbers;
+        }
+
+        String tail = xpath.substring(goodsItemsEnd + 1);
+
+        Matcher matcher = SEQUENCE_NUMBER_VALUE.matcher(tail);
+        while (matcher.find()) {
+            sequenceNumbers.add(Integer.parseInt(matcher.group(1)));
+        }
+
+        return sequenceNumbers;
     }
 
     /**
@@ -71,15 +101,12 @@ class XPathNormaliser {
      */
     private String normaliseSegment(String segment) {
         int bracketStart = segment.indexOf('[');
-
         if (bracketStart == -1) {
             return segment;
         }
-
         String nodeName = segment.substring(0, bracketStart);
         String predicateContent = segment.substring(bracketStart + 1, segment.length() - 1);
         String normalisedPredicate = predicateParser.normalise(predicateContent);
-
         return nodeName + "[" + normalisedPredicate + "]";
     }
 }
