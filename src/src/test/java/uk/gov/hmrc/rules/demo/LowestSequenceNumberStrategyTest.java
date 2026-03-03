@@ -1,4 +1,4 @@
-package uk.gov.hmrc.rules.demo;
+package uk.gov.hmrc.cars.rules.dms.util;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
