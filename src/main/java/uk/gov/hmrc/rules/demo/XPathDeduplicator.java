@@ -7,40 +7,53 @@ import java.util.*;
  *
  * Delegates XPath normalisation to XPathNormaliser.
  * Delegates pointer selection to PointerSelectionStrategy.
+ * Optionally produces a detailed report via DeduplicationReporter (development use only).
  *
- * Rules:
- * - Order of results is preserved throughout
- * - Dedup is scoped per rule ID - pointers only compared within the same rule
- * - Which pointer survives is determined by the injected PointerSelectionStrategy
- * - Duplicate pointers are removed from the mutable pointers list on each result
- * - If a result ends up with no pointers it is excluded from the output
- * - The input list is never modified - a new output list is built
+ * Three pass algorithm:
+ * - Pass 1: Collect all pointer candidates grouped by rule ID and normalised key
+ * - Pass 2: For each group, use strategy to select winner, remove losers from parent results
+ * - Pass 3: Build output list, excluding results with empty pointer lists
  *
- * @version 0.2.0-SNAPSHOT
+ * @version 0.3.0-SNAPSHOT
  * @since 2026-02-27
  */
 public class XPathDeduplicator {
 
     private final XPathNormaliser normaliser;
     private final PointerSelectionStrategy strategy;
+    private final boolean reportingEnabled;
+    private final DeduplicationReporter reporter;
 
+    /**
+     * Production constructor - reporting disabled.
+     */
     public XPathDeduplicator(NormalisationConfig config, PointerSelectionStrategy strategy) {
+        this(config, strategy, false);
+    }
+
+    /**
+     * Development constructor - reporting optionally enabled.
+     *
+     * @param reportingEnabled when true produces a detailed deduplication report to the log.
+     *                         FOR DEVELOPMENT USE ONLY - disable in production.
+     */
+    public XPathDeduplicator(NormalisationConfig config, PointerSelectionStrategy strategy, boolean reportingEnabled) {
         this.normaliser = new XPathNormaliser(config);
         this.strategy = strategy;
+        this.reportingEnabled = reportingEnabled;
+        this.reporter = reportingEnabled ? new DeduplicationReporter() : null;
     }
 
     /**
      * Deduplicates pointers across a list of RuleFiredValidationResult objects.
      *
-     * Pass 1: Collect all pointer candidates grouped by rule ID and normalised key
-     * Pass 2: For each group, use strategy to select winner, remove losers from parent results
-     * Pass 3: Build output list, excluding results with empty pointer lists
-     *
      * @param results list of validation results to deduplicate
      * @return new list in original order, containing only results that still have pointers
      */
     public List<RuleFiredValidationResult> deduplicate(List<RuleFiredValidationResult> results) {
-        // Pass 1 - collect candidates
+        int originalCount = results.size();
+
+        // Pass 1 - collect candidates grouped by rule ID then normalised key
         Map<String, Map<String, List<PointerCandidate>>> candidatesByRuleAndKey = new LinkedHashMap<>();
 
         for (RuleFiredValidationResult result : results) {
@@ -59,13 +72,31 @@ public class XPathDeduplicator {
             }
         }
 
-        // Pass 2 - for each group, select winner, remove losers from parent results
-        for (Map<String, List<PointerCandidate>> byKey : candidatesByRuleAndKey.values()) {
-            for (List<PointerCandidate> candidates : byKey.values()) {
+        // Pass 2 - for each group select winner, remove losers from parent results
+        // Track winners for reporting
+        Map<String, Map<String, PointerCandidate>> winnersByRuleAndKey =
+                reportingEnabled ? new LinkedHashMap<>() : null;
+
+        for (Map.Entry<String, Map<String, List<PointerCandidate>>> ruleEntry
+                : candidatesByRuleAndKey.entrySet()) {
+
+            String ruleId = ruleEntry.getKey();
+
+            for (Map.Entry<String, List<PointerCandidate>> keyEntry : ruleEntry.getValue().entrySet()) {
+                String normalisedKey = keyEntry.getKey();
+                List<PointerCandidate> candidates = keyEntry.getValue();
+
                 if (candidates.size() > 1) {
-                    String winningPointer = strategy.select(candidates);
+                    PointerCandidate winner = strategy.select(candidates);
+
+                    if (reportingEnabled) {
+                        winnersByRuleAndKey
+                                .computeIfAbsent(ruleId, k -> new LinkedHashMap<>())
+                                .put(normalisedKey, winner);
+                    }
+
                     for (PointerCandidate candidate : candidates) {
-                        if (!candidate.pointer.equals(winningPointer)) {
+                        if (candidate != winner) {
                             candidate.parent.getPointers().remove(candidate.pointer);
                         }
                     }
@@ -75,10 +106,21 @@ public class XPathDeduplicator {
 
         // Pass 3 - build output list preserving original order, excluding empty results
         List<RuleFiredValidationResult> output = new ArrayList<>();
+        List<RuleFiredValidationResult> removedResults =
+                reportingEnabled ? new ArrayList<>() : null;
+
         for (RuleFiredValidationResult result : results) {
             if (!result.getPointers().isEmpty()) {
                 output.add(result);
+            } else if (reportingEnabled) {
+                removedResults.add(result);
             }
+        }
+
+        // Report if enabled
+        if (reportingEnabled) {
+            reporter.report(candidatesByRuleAndKey, winnersByRuleAndKey,
+                    removedResults, originalCount, output.size());
         }
 
         return output;
