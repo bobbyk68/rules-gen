@@ -15,8 +15,8 @@
     <description>Text-based rule parser + IR demo</description>
     <properties>
         <snakeyaml.version>2.2</snakeyaml.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
     <dependencies>
